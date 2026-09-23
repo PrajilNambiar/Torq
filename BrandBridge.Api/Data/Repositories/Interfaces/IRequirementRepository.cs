@@ -12,6 +12,6 @@ public interface IRequirementRepository
     void Add(Requirement requirement);
     void AddAsset(RequirementAsset asset);
     Task<PagedResult<Requirement>> ListByBusinessAsync(Guid businessId, int page, int pageSize, CancellationToken ct);
-    Task<PagedResult<Requirement>> ListOpportunitiesAsync(string[] categories, int page, int pageSize, CancellationToken ct);
+    Task<PagedResult<Requirement>> ListEligibleAsync(IReadOnlyCollection<string> serviceCategories, int page, int pageSize, CancellationToken ct);
     Task<PagedResult<Requirement>> ListPendingAsync(int page, int pageSize, CancellationToken ct);
 }

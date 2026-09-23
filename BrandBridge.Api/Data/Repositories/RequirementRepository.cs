@@ -1,5 +1,6 @@
 using BrandBridge.Api.Common;
 using BrandBridge.Api.Data.Repositories.Interfaces;
+using BrandBridge.Api.Domain;
 using BrandBridge.Api.Domain.Entities;
 using BrandBridge.Api.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -37,17 +38,12 @@ public sealed class RequirementRepository(BrandBridgeDbContext db) : IRequiremen
         return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };
     }
 
-    public async Task<PagedResult<Requirement>> ListOpportunitiesAsync(string[] categories, int page, int pageSize, CancellationToken ct)
+    public async Task<PagedResult<Requirement>> ListEligibleAsync(IReadOnlyCollection<string> serviceCategories, int page, int pageSize, CancellationToken ct)
     {
         (page, pageSize) = QueryPaging.Normalize(page, pageSize);
         var query = db.Requirements.AsNoTracking()
-            .Where(x => x.Status == RequirementStatus.Open || x.Status == RequirementStatus.ProposalReview);
-        if (categories.Length > 0)
-        {
-            query = query.Where(x => categories.Contains(x.Category));
-        }
-
-        query = query.OrderByDescending(x => x.CreatedAt);
+            .Where(RequirementMatcher.EligibleFor(serviceCategories))
+            .OrderByDescending(x => x.CreatedAt);
         var total = await query.CountAsync(ct);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
         return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };

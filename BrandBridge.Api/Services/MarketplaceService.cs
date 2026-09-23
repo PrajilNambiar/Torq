@@ -4,6 +4,7 @@ using AutoMapper;
 using BrandBridge.Api.Common;
 using BrandBridge.Api.Contracts;
 using BrandBridge.Api.Data.Repositories.Interfaces;
+using BrandBridge.Api.Domain;
 using BrandBridge.Api.Domain.Entities;
 using BrandBridge.Api.Domain.Enums;
 using Microsoft.Extensions.Options;
@@ -218,7 +219,8 @@ public sealed class MarketplaceService(
         }
         else if (role == UserRole.Provider)
         {
-            if (requirement.Status is not (RequirementStatus.Open or RequirementStatus.ProposalReview))
+            var provider = await providers.RequireByUserIdAsync(userId, tracking: false, ct);
+            if (!RequirementMatcher.IsEligible(requirement, provider.ServiceCategories))
             {
                 throw new AppException("Requirement is not open.", HttpStatusCode.Forbidden);
             }
@@ -232,8 +234,8 @@ public sealed class MarketplaceService(
         var provider = await providers.RequireByUserIdAsync(userId, tracking: false, ct);
         EnsureVerified(provider);
 
-        var categories = provider.ServiceCategories.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var result = await requirements.ListOpportunitiesAsync(categories, page, pageSize, ct);
+        var categories = RequirementMatcher.ParseServiceCategories(provider.ServiceCategories);
+        var result = await requirements.ListEligibleAsync(categories, page, pageSize, ct);
         return MapPage<Requirement, OpportunityDto>(result);
     }
 
@@ -243,7 +245,7 @@ public sealed class MarketplaceService(
         EnsureVerified(provider);
         var requirement = await requirements.GetByIdAsync(request.RequirementId, tracking: true, ct)
                           ?? throw new AppException("Requirement not found.", HttpStatusCode.NotFound);
-        if (requirement.Status is not (RequirementStatus.Open or RequirementStatus.ProposalReview))
+        if (!RequirementMatcher.IsEligible(requirement, provider.ServiceCategories))
         {
             throw new AppException("Requirement is not accepting proposals.");
         }
