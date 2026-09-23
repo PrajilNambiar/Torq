@@ -65,6 +65,10 @@ public sealed class MarketplaceFlowTests : IClassFixture<ApiFactory>
         var created = await (await _client.PostAsJsonAsync("/api/v1/requirements", ValidRequirement()))
             .EnsureSuccess().Content.ReadFromJsonAsync<RequirementDto>();
         created!.Status.Should().Be(RequirementStatus.Draft);
+        created.TimelineNotes.Should().Be("Need drafts by week 2");
+        created.SelectionPreference.Should().Be("Audience match + quality");
+        created.ProposalDeadlineAt.Should().NotBeNull();
+        created.Assets.Should().BeEmpty();
         (await _client.PostAsync($"/api/v1/requirements/{created.Id}/submit", null)).EnsureSuccess();
 
         UseToken(admin.AccessToken);
@@ -145,7 +149,7 @@ public sealed class MarketplaceFlowTests : IClassFixture<ApiFactory>
         50000,
         80000,
         28,
-        null,
+        "Need drafts by week 2",
         "Audience match + quality",
         DateTime.UtcNow.AddDays(5));
 }

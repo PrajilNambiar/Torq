@@ -41,7 +41,7 @@ public sealed class MappingProfile : Profile
         CreateMap<PortfolioItem, PortfolioItemDto>();
         CreateMap<SocialAccount, SocialAccountDto>();
         CreateMap<Requirement, RequirementDto>()
-            .ForCtorParam(nameof(RequirementDto.Assets), o => o.MapFrom(_ => (IReadOnlyList<FileAssetDto>?)null));
+            .ForCtorParam(nameof(RequirementDto.Assets), o => o.MapFrom(s => s.Assets));
         CreateMap<Requirement, OpportunityDto>();
         CreateMap<CreateRequirementRequest, Requirement>()
             .ForMember(d => d.Id, o => o.Ignore())

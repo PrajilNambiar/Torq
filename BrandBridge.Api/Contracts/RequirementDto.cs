@@ -16,6 +16,9 @@ public sealed record RequirementDto(
     decimal? BudgetMax,
     string Currency,
     int? TimelineDays,
+    string? TimelineNotes,
+    string? SelectionPreference,
+    DateTime? ProposalDeadlineAt,
     RequirementStatus Status,
     DateTime CreatedAt,
-    IReadOnlyList<FileAssetDto>? Assets = null);
+    IReadOnlyList<FileAssetDto> Assets);

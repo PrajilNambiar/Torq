@@ -11,11 +11,12 @@ public sealed class RequirementRepository(BrandBridgeDbContext db) : IRequiremen
     public async Task<Requirement?> GetByIdAsync(Guid id, bool tracking, CancellationToken ct)
     {
         var query = tracking ? db.Requirements.AsQueryable() : db.Requirements.AsNoTracking();
-        return await query.FirstOrDefaultAsync(x => x.Id == id, ct);
+        return await query.Include(x => x.Assets).FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
     public Task<Requirement?> GetByIdAndBusinessAsync(Guid id, Guid businessId, CancellationToken ct)
-        => db.Requirements.FirstOrDefaultAsync(x => x.Id == id && x.BusinessId == businessId, ct);
+        => db.Requirements.Include(x => x.Assets)
+            .FirstOrDefaultAsync(x => x.Id == id && x.BusinessId == businessId, ct);
 
     public Task<bool> ExistsForBusinessAsync(Guid id, Guid businessId, CancellationToken ct)
         => db.Requirements.AsNoTracking().AnyAsync(x => x.Id == id && x.BusinessId == businessId, ct);
@@ -26,9 +27,13 @@ public sealed class RequirementRepository(BrandBridgeDbContext db) : IRequiremen
     public async Task<PagedResult<Requirement>> ListByBusinessAsync(Guid businessId, int page, int pageSize, CancellationToken ct)
     {
         (page, pageSize) = QueryPaging.Normalize(page, pageSize);
-        var query = db.Requirements.AsNoTracking().Where(x => x.BusinessId == businessId).OrderByDescending(x => x.CreatedAt);
+        var query = db.Requirements.AsNoTracking().Where(x => x.BusinessId == businessId);
         var total = await query.CountAsync(ct);
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        var items = await query.Include(x => x.Assets)
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
         return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };
     }
 
@@ -52,10 +57,13 @@ public sealed class RequirementRepository(BrandBridgeDbContext db) : IRequiremen
     {
         (page, pageSize) = QueryPaging.Normalize(page, pageSize);
         var query = db.Requirements.AsNoTracking()
-            .Where(x => x.Status == RequirementStatus.UnderReview)
-            .OrderBy(x => x.CreatedAt);
+            .Where(x => x.Status == RequirementStatus.UnderReview);
         var total = await query.CountAsync(ct);
-        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        var items = await query.Include(x => x.Assets)
+            .OrderBy(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
         return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };
     }
 }
