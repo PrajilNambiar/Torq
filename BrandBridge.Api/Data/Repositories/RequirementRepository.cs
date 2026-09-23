@@ -1,0 +1,61 @@
+using BrandBridge.Api.Common;
+using BrandBridge.Api.Data.Repositories.Interfaces;
+using BrandBridge.Api.Domain.Entities;
+using BrandBridge.Api.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
+
+namespace BrandBridge.Api.Data.Repositories;
+
+public sealed class RequirementRepository(BrandBridgeDbContext db) : IRequirementRepository
+{
+    public async Task<Requirement?> GetByIdAsync(Guid id, bool tracking, CancellationToken ct)
+    {
+        var query = tracking ? db.Requirements.AsQueryable() : db.Requirements.AsNoTracking();
+        return await query.FirstOrDefaultAsync(x => x.Id == id, ct);
+    }
+
+    public Task<Requirement?> GetByIdAndBusinessAsync(Guid id, Guid businessId, CancellationToken ct)
+        => db.Requirements.FirstOrDefaultAsync(x => x.Id == id && x.BusinessId == businessId, ct);
+
+    public Task<bool> ExistsForBusinessAsync(Guid id, Guid businessId, CancellationToken ct)
+        => db.Requirements.AsNoTracking().AnyAsync(x => x.Id == id && x.BusinessId == businessId, ct);
+
+    public void Add(Requirement requirement) => db.Requirements.Add(requirement);
+    public void AddAsset(RequirementAsset asset) => db.RequirementAssets.Add(asset);
+
+    public async Task<PagedResult<Requirement>> ListByBusinessAsync(Guid businessId, int page, int pageSize, CancellationToken ct)
+    {
+        (page, pageSize) = QueryPaging.Normalize(page, pageSize);
+        var query = db.Requirements.AsNoTracking().Where(x => x.BusinessId == businessId).OrderByDescending(x => x.CreatedAt);
+        var total = await query.CountAsync(ct);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };
+    }
+
+    public async Task<PagedResult<Requirement>> ListOpportunitiesAsync(string[] categories, int page, int pageSize, CancellationToken ct)
+    {
+        (page, pageSize) = QueryPaging.Normalize(page, pageSize);
+        var query = db.Requirements.AsNoTracking()
+            .Where(x => x.Status == RequirementStatus.Open || x.Status == RequirementStatus.ProposalReview);
+        if (categories.Length > 0)
+        {
+            query = query.Where(x => categories.Contains(x.Category));
+        }
+
+        query = query.OrderByDescending(x => x.CreatedAt);
+        var total = await query.CountAsync(ct);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };
+    }
+
+    public async Task<PagedResult<Requirement>> ListPendingAsync(int page, int pageSize, CancellationToken ct)
+    {
+        (page, pageSize) = QueryPaging.Normalize(page, pageSize);
+        var query = db.Requirements.AsNoTracking()
+            .Where(x => x.Status == RequirementStatus.UnderReview)
+            .OrderBy(x => x.CreatedAt);
+        var total = await query.CountAsync(ct);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };
+    }
+}
