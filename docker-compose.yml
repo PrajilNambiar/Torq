@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: brandbridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - brandbridge_pg:/var/lib/postgresql/data
+
+volumes:
+  brandbridge_pg:
