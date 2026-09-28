@@ -45,13 +45,20 @@ export function AppShell() {
               {link.label}
             </NavLink>
           ))}
-          {user && (
+          {user ? (
             <>
               <StatusChipSoft label={roleLabel(user.role)} />
               <span className="muted">{user.displayName}</span>
               <button type="button" className="btn btn-ghost" onClick={logout}>
                 Log out
               </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login">Log in</NavLink>
+              <NavLink to="/register" className="btn btn-primary">
+                Get started
+              </NavLink>
             </>
           )}
         </nav>

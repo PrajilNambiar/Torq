@@ -194,13 +194,22 @@ h3,
 }
 
 .hero-ghost {
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.55);
   color: #f4fbf9;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .hero-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.hero-bleed .btn-primary {
+  background: #f4fbf9;
+  color: var(--ink);
+}
+
+.hero-bleed .btn-primary:hover:not(:disabled) {
+  background: white;
 }
 
 @keyframes gridDrift {
