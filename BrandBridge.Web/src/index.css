@@ -134,7 +134,7 @@ h3,
 .hero-bleed {
   min-height: calc(100vh - 4.5rem);
   display: grid;
-  align-content: end;
+  align-content: center;
   padding: clamp(2rem, 6vw, 4.5rem);
   position: relative;
   overflow: hidden;
