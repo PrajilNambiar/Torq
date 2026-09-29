@@ -1,10 +1,11 @@
 # BrandBridge
 
-Marketing marketplace backend (Phase 1). Product source: BrandBridge Startup & Product Blueprint. Stack: ASP.NET Core 9 and PostgreSQL. Frontend is a separate project and is not in this phase.
+Marketing marketplace (Phase 1). Product source: BrandBridge Startup & Product Blueprint. Stack: ASP.NET Core 9, PostgreSQL, and a React (Vite) UI.
 
 ## Solution
 
 - `BrandBridge.Api` — marketplace API (Identity, Marketplace, Campaigns, Payments stub)
+- `BrandBridge.Web` — React frontend (Vite + TypeScript) on `http://localhost:3000`
 - `tests/BrandBridge.Api.Tests` — API flow tests (in-memory)
 
 ## Run locally
@@ -17,6 +18,16 @@ dotnet run
 ```
 
 API: `http://localhost:5081/swagger`
+
+Frontend:
+
+```bash
+cd BrandBridge.Web
+npm install
+npm run dev
+```
+
+UI: `http://localhost:3000`
 
 Seed admin: `admin@brandbridge.local` / `Admin12345!`
 
