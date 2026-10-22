@@ -25,17 +25,58 @@ public static class DatabaseConfiguration
         };
     }
 
-    public static string ResolvePostgresConnectionString(IConfiguration configuration)
+    public static string ResolvePostgresConnectionString(IConfiguration configuration, bool allowLocal = true)
     {
         var databaseUrl = configuration["DATABASE_URL"];
-        if (!string.IsNullOrWhiteSpace(databaseUrl))
+        if (!string.IsNullOrWhiteSpace(databaseUrl) && !IsLocalConnection(databaseUrl))
         {
             return FromDatabaseUrl(databaseUrl);
         }
 
-        var configured = configuration.GetConnectionString("Default")
-                         ?? "Host=localhost;Port=5432;Database=torq;Username=postgres;Password=postgres";
-        return FromDatabaseUrl(configured);
+        var configured = FromDatabaseUrl(configuration.GetConnectionString("Default")
+                         ?? "Host=localhost;Port=5432;Database=torq;Username=postgres;Password=postgres");
+        if (allowLocal || !IsLocalConnection(configured))
+        {
+            return configured;
+        }
+
+        var fromFile = ReadPublishedDefaultConnectionString();
+        if (!string.IsNullOrWhiteSpace(fromFile))
+        {
+            var published = FromDatabaseUrl(fromFile);
+            if (!IsLocalConnection(published))
+            {
+                return published;
+            }
+        }
+
+        return configured;
+    }
+
+    public static bool IsLocalConnection(string connectionString)
+    {
+        var host = new NpgsqlConnectionStringBuilder(FromDatabaseUrl(connectionString)).Host;
+        return string.IsNullOrWhiteSpace(host)
+               || host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+               || host is "127.0.0.1" or "::1";
+    }
+
+    private static string? ReadPublishedDefaultConnectionString()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        if (document.RootElement.TryGetProperty("ConnectionStrings", out var connections)
+            && connections.TryGetProperty("Default", out var value))
+        {
+            return value.GetString();
+        }
+
+        return null;
     }
 
     public static string FromDatabaseUrl(string databaseUrl)

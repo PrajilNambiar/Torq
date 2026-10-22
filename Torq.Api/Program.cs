@@ -33,7 +33,11 @@ public partial class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.Host.UseSerilog();
 
-        var connectionString = DatabaseConfiguration.ResolvePostgresConnectionString(builder.Configuration);
+        var onRender = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("RENDER"))
+                       || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("RENDER_SERVICE_ID"));
+        var connectionString = DatabaseConfiguration.ResolvePostgresConnectionString(
+            builder.Configuration,
+            allowLocal: !onRender && !builder.Environment.IsProduction());
 
         builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
         builder.Services.Configure<MarketplaceOptions>(builder.Configuration.GetSection("Marketplace"));
@@ -90,6 +94,8 @@ public partial class Program
                 return;
             }
 
+            var host = new Npgsql.NpgsqlConnectionStringBuilder(connectionString).Host;
+            Log.Information("Using Postgres host {Host}", host);
             options.UseNpgsql(connectionString);
         });
 

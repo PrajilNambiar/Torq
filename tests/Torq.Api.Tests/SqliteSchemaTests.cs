@@ -40,4 +40,12 @@ public sealed class DatabaseUrlTests
         Assert.Equal("secret", builder.Password);
         Assert.Equal(SslMode.Disable, builder.SslMode);
     }
+
+    [Fact]
+    public void Localhost_is_not_treated_as_a_remote_database()
+    {
+        Assert.True(DatabaseConfiguration.IsLocalConnection("Host=127.0.0.1;Port=5432;Database=torq"));
+        Assert.False(DatabaseConfiguration.IsLocalConnection(
+            DatabaseConfiguration.FromDatabaseUrl("postgresql://user:pw@dpg-dbd4q3nf3r2c73baosgg-a/torq")));
+    }
 }
