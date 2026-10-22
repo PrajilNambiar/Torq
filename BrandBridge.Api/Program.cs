@@ -79,11 +79,19 @@ public partial class Program
             if (builder.Environment.IsEnvironment("Testing"))
             {
                 options.UseInMemoryDatabase(builder.Configuration["Testing:DbName"] ?? "brandbridge-tests");
+                return;
             }
-            else
+
+            if (DatabaseConfiguration.ResolveProvider(builder.Configuration) == DatabaseConfiguration.Sqlite)
             {
-                options.UseNpgsql(connectionString);
+                var sqlite = builder.Configuration.GetConnectionString("Sqlite")
+                             ?? "Data Source=App_Data/brandbridge.db";
+                DatabaseConfiguration.EnsureSqliteDirectory(sqlite);
+                options.UseSqlite(sqlite);
+                return;
             }
+
+            options.UseNpgsql(connectionString);
         });
 
         builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
@@ -169,7 +177,8 @@ public partial class Program
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<BrandBridgeDbContext>();
-            if (app.Environment.IsEnvironment("Testing"))
+            if (app.Environment.IsEnvironment("Testing")
+                || DatabaseConfiguration.ResolveProvider(app.Configuration) == DatabaseConfiguration.Sqlite)
             {
                 await db.Database.EnsureCreatedAsync();
             }
