@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using Npgsql;
 
 namespace Torq.Api.Data;
 
@@ -22,6 +23,66 @@ public static class DatabaseConfiguration
             _ => throw new InvalidOperationException(
                 $"Unsupported Database:Provider '{provider}'. Use Postgres or Sqlite.")
         };
+    }
+
+    public static string ResolvePostgresConnectionString(IConfiguration configuration)
+    {
+        var databaseUrl = configuration["DATABASE_URL"];
+        if (!string.IsNullOrWhiteSpace(databaseUrl))
+        {
+            return FromDatabaseUrl(databaseUrl);
+        }
+
+        return configuration.GetConnectionString("Default")
+               ?? "Host=localhost;Port=5432;Database=torq;Username=postgres;Password=postgres";
+    }
+
+    public static string FromDatabaseUrl(string databaseUrl)
+    {
+        if (!databaseUrl.Contains("://", StringComparison.Ordinal))
+        {
+            return databaseUrl;
+        }
+
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var username = Uri.UnescapeDataString(userInfo[0]);
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
+        var database = uri.AbsolutePath.TrimStart('/');
+        if (string.IsNullOrWhiteSpace(database))
+        {
+            throw new InvalidOperationException("DATABASE_URL does not include a database name.");
+        }
+
+        var sslMode = uri.Host.Contains('.') ? SslMode.Require : SslMode.Disable;
+        var query = uri.Query.TrimStart('?');
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var pair = part.Split('=', 2);
+            if (pair.Length == 2 && pair[0].Equals("sslmode", StringComparison.OrdinalIgnoreCase))
+            {
+                sslMode = pair[1].ToLowerInvariant() switch
+                {
+                    "disable" => SslMode.Disable,
+                    "allow" => SslMode.Allow,
+                    "prefer" => SslMode.Prefer,
+                    "require" => SslMode.Require,
+                    "verify-ca" => SslMode.VerifyCA,
+                    "verify-full" => SslMode.VerifyFull,
+                    _ => sslMode
+                };
+            }
+        }
+
+        return new NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.IsDefaultPort ? 5432 : uri.Port,
+            Database = database,
+            Username = username,
+            Password = password,
+            SslMode = sslMode
+        }.ConnectionString;
     }
 
     public static void EnsureSqliteDirectory(string connectionString)

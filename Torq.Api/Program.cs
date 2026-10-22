@@ -33,8 +33,7 @@ public partial class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.Host.UseSerilog();
 
-        var connectionString = builder.Configuration.GetConnectionString("Default")
-                               ?? "Host=localhost;Port=5432;Database=torq;Username=postgres;Password=postgres";
+        var connectionString = DatabaseConfiguration.ResolvePostgresConnectionString(builder.Configuration);
 
         builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
         builder.Services.Configure<MarketplaceOptions>(builder.Configuration.GetSection("Marketplace"));
