@@ -153,10 +153,17 @@ public partial class Program
             });
         });
 
+        var corsOrigins = new List<string> { "http://localhost:3000", "https://localhost:3000" };
+        var extraOrigins = builder.Configuration["Cors:ExtraOrigins"];
+        if (!string.IsNullOrWhiteSpace(extraOrigins))
+        {
+            corsOrigins.AddRange(extraOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        }
+
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("ui", policy =>
-                policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+                policy.WithOrigins(corsOrigins.ToArray())
                     .AllowAnyHeader()
                     .AllowAnyMethod());
         });
