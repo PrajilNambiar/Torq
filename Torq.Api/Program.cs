@@ -184,6 +184,7 @@ public partial class Program
         app.UseSwaggerUI();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.MapGet("/", () => Results.Redirect("/swagger"));
         app.MapControllers();
 
         using (var scope = app.Services.CreateScope())
