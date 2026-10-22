@@ -1,24 +1,24 @@
-# BrandBridge
+# Torq
 
-Marketing marketplace backend (Phase 1). Product source: BrandBridge Startup & Product Blueprint. Stack: ASP.NET Core 9 and PostgreSQL. Frontend is a separate project and is not in this phase.
+Marketing marketplace backend (Phase 1). Product source: Torq Startup & Product Blueprint. Stack: ASP.NET Core 9 and PostgreSQL. Frontend is a separate project and is not in this phase.
 
 ## Solution
 
-- `BrandBridge.Api` — marketplace API (Identity, Marketplace, Campaigns, Payments stub)
-- `tests/BrandBridge.Api.Tests` — API flow tests (in-memory)
+- `Torq.Api` — marketplace API (Identity, Marketplace, Campaigns, Payments stub)
+- `tests/Torq.Api.Tests` — API flow tests (in-memory)
 
 ## Run locally
 
 ```powershell
 docker compose up -d
-cd BrandBridge.Api
+cd Torq.Api
 dotnet ef database update
 dotnet run
 ```
 
 API: `http://localhost:5081/swagger`
 
-Seed admin: `admin@brandbridge.local` / `Admin12345!`
+Seed admin: `admin@torq.local` / `Admin12345!`
 
 ## Core loop
 

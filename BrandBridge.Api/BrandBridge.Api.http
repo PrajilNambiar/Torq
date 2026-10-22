@@ -1,6 +1,0 @@
-@BrandBridge.Api_HostAddress = http://localhost:5020
-
-GET {{BrandBridge.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

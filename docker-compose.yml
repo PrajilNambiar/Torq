@@ -4,11 +4,11 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: brandbridge
+      POSTGRES_DB: torq
     ports:
       - "5432:5432"
     volumes:
-      - brandbridge_pg:/var/lib/postgresql/data
+      - torq_pg:/var/lib/postgresql/data
 
 volumes:
-  brandbridge_pg:
+  torq_pg:
