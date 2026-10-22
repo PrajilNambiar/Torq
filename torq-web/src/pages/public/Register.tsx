@@ -38,9 +38,16 @@ export function Register() {
         ← Back to home
       </Link>
       <form className="auth-card" onSubmit={submit}>
-        <Link to="/" className="brand">
-          <span className="brand-mark">BB</span>
-          <span>Torq</span>
+        <Link to="/" className="brand" aria-label="TORQ Home">
+          <span className="brand-mark">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="white" />
+            </svg>
+          </span>
+          <div className="brand-text-block">
+            <span className="brand-title">TORQ</span>
+            <span className="brand-badge">BrandBridge</span>
+          </div>
         </Link>
         <h1>Create your account</h1>
 
