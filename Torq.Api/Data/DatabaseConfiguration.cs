@@ -33,8 +33,9 @@ public static class DatabaseConfiguration
             return FromDatabaseUrl(databaseUrl);
         }
 
-        return configuration.GetConnectionString("Default")
-               ?? "Host=localhost;Port=5432;Database=torq;Username=postgres;Password=postgres";
+        var configured = configuration.GetConnectionString("Default")
+                         ?? "Host=localhost;Port=5432;Database=torq;Username=postgres;Password=postgres";
+        return FromDatabaseUrl(configured);
     }
 
     public static string FromDatabaseUrl(string databaseUrl)
