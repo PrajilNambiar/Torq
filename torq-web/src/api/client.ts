@@ -1,6 +1,18 @@
 import axios, { AxiosError } from 'axios'
 
 const TOKEN_KEY = 'bb.token'
+const LOCAL_API = 'http://localhost:5081/api/v1'
+const RENDER_API = 'https://torq-n6nw.onrender.com/api/v1'
+
+function resolveApiBaseUrl(): string {
+  const configured = import.meta.env.VITE_API_BASE_URL
+  if (configured) return configured
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname
+    if (host !== 'localhost' && host !== '127.0.0.1') return RENDER_API
+  }
+  return LOCAL_API
+}
 
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
@@ -9,7 +21,7 @@ export const tokenStore = {
 }
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5081/api/v1',
+  baseURL: resolveApiBaseUrl(),
 })
 
 api.interceptors.request.use((config) => {
@@ -56,7 +68,7 @@ export function errorMessage(error: unknown): string {
     if (body?.error) return body.error
     if (body?.errors) return Object.values(body.errors).flat().join(' ')
     if (body?.title) return body.title
-    if (!error.response) return 'Cannot reach the Torq API. Is it running on port 5081?'
+    if (!error.response) return `Cannot reach the Torq API at ${api.defaults.baseURL}.`
     return `Request failed (${status}).`
   }
   return error instanceof Error ? error.message : 'Something went wrong.'

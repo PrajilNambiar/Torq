@@ -158,7 +158,12 @@ public partial class Program
             });
         });
 
-        var corsOrigins = new List<string> { "http://localhost:3000", "https://localhost:3000" };
+        var corsOrigins = new List<string>
+        {
+            "http://localhost:3000",
+            "https://localhost:3000",
+            "https://torq-1.onrender.com"
+        };
         var extraOrigins = builder.Configuration["Cors:ExtraOrigins"];
         if (!string.IsNullOrWhiteSpace(extraOrigins))
         {
