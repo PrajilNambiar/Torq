@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { BrandMark } from '../components/BrandMark'
 import { UserRole, labels } from '../types/enums'
 
 const nav: Record<UserRole, { to: string; label: string; end?: boolean }[]> = {
@@ -56,9 +57,7 @@ export function AppLayout() {
           </button>
           <div className="brand">
             <span className="brand-mark">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="white" />
-              </svg>
+              <BrandMark size={16} />
             </span>
             <div className="brand-text-block">
               <span className="brand-title">TORQ</span>
@@ -79,9 +78,7 @@ export function AppLayout() {
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="brand">
           <span className="brand-mark">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="white" />
-            </svg>
+            <BrandMark size={18} />
           </span>
           <div className="brand-text-block">
             <span className="brand-title">TORQ</span>

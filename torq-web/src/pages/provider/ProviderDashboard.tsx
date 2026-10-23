@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { campaignsApi, opportunitiesApi, providersApi } from '../../api'
 import { StatusBadge } from '../../components/StatusBadge'
 import { Card, EmptyState, PageHeader, Spinner, Stat } from '../../components/ui'
+import { TickIcon } from '../../components/TickIcon'
 import { CampaignStatus, ProviderStatus } from '../../types/enums'
 import { budget, date, money, shortId } from '../../lib/format'
 import { VerificationBanner } from './VerificationBanner'
@@ -56,7 +57,7 @@ export function ProviderDashboard() {
             <ul className="checklist">
               {checklist.map((item) => (
                 <li key={item.label} className={item.done ? 'done' : ''}>
-                  <span aria-hidden>{item.done ? '✔' : '○'}</span>
+                  <span aria-hidden>{item.done ? <TickIcon size={15} strokeWidth={2.2} className="checklist-tick" /> : <span className="checklist-circle">○</span>}</span>
                   <Link to={item.to}>{item.label}</Link>
                 </li>
               ))}

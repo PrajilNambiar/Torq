@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { homeFor } from '../../auth/homeFor'
+import { BrandMark } from '../../components/BrandMark'
+import { TickIcon } from '../../components/TickIcon'
 
 const steps = [
   ['Post', 'Describe your marketing need once.'],
@@ -124,9 +126,7 @@ export function Landing() {
         <div className="landing-nav-inner">
           <Link to="/" className="brand" aria-label="TORQ Home">
             <span className="brand-mark">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="white" />
-              </svg>
+              <BrandMark size={18} />
             </span>
             <div className="brand-text-block">
               <span className="brand-title">TORQ</span>
@@ -205,9 +205,9 @@ export function Landing() {
           </Link>
         </div>
         <ul className="hero-points">
-          <li>✔ Free to post</li>
-          <li>✔ Verified providers</li>
-          <li>✔ Milestone-protected payments</li>
+          <li><TickIcon size={14} strokeWidth={2} /> Free to post</li>
+          <li><TickIcon size={14} strokeWidth={2} /> Verified providers</li>
+          <li><TickIcon size={14} strokeWidth={2} /> Milestone-protected payments</li>
         </ul>
       </section>
 
@@ -227,7 +227,7 @@ export function Landing() {
           ].map(([name, price, days, rev, star]) => (
             <div key={name as string} className={`preview-card ${star ? 'star' : ''}`}>
               <div className="preview-name">
-                {name} <span className="badge success">✔ Verified</span>
+                {name} <span className="badge success"><TickIcon size={11} strokeWidth={2} /> Verified</span>
               </div>
               <div className="preview-price">{price}</div>
               <div className="muted small">
@@ -287,7 +287,7 @@ export function Landing() {
               <span className="pain-arrow" aria-hidden>
                 →
               </span>
-              <span className="pain-after">✔ {after}</span>
+              <span className="pain-after"><TickIcon size={14} strokeWidth={2} /> {after}</span>
             </div>
           ))}
         </div>
@@ -304,7 +304,7 @@ export function Landing() {
             </p>
             <ul className="perks">
               {brandPerks.map((p) => (
-                <li key={p}>✔ {p}</li>
+                <li key={p}><TickIcon size={14} strokeWidth={2} /> {p}</li>
               ))}
             </ul>
             <Link to="/register?role=business" className="btn primary">
@@ -320,7 +320,7 @@ export function Landing() {
             </p>
             <ul className="perks">
               {providerPerks.map((p) => (
-                <li key={p}>✔ {p}</li>
+                <li key={p}><TickIcon size={14} strokeWidth={2} /> {p}</li>
               ))}
             </ul>
             <Link to="/register?role=provider" className="btn ghost">
@@ -412,9 +412,7 @@ export function Landing() {
       <footer className="lp-footer">
         <div className="brand">
           <span className="brand-mark">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="white" />
-            </svg>
+            <BrandMark size={18} />
           </span>
           <div className="brand-text-block">
             <span className="brand-title">TORQ</span>

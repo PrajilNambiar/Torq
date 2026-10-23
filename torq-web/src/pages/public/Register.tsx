@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { homeFor } from '../../auth/homeFor'
+import { BrandMark } from '../../components/BrandMark'
 import { ErrorBox, Field } from '../../components/ui'
 import { UserRole } from '../../types/enums'
 
@@ -40,9 +41,7 @@ export function Register() {
       <form className="auth-card" onSubmit={submit}>
         <Link to="/" className="brand" aria-label="TORQ Home">
           <span className="brand-mark">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="white" />
-            </svg>
+            <BrandMark size={18} />
           </span>
           <div className="brand-text-block">
             <span className="brand-title">TORQ</span>
