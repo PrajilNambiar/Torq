@@ -5,13 +5,15 @@ const LOCAL_API = 'http://localhost:5081/api/v1'
 const RENDER_API = 'https://torq-n6nw.onrender.com/api/v1'
 
 function resolveApiBaseUrl(): string {
-  const configured = import.meta.env.VITE_API_BASE_URL
-  if (configured) return configured
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname
-    if (host !== 'localhost' && host !== '127.0.0.1') return RENDER_API
-  }
-  return LOCAL_API
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim()
+  const pageHost = typeof window === 'undefined' ? '' : window.location.hostname
+  const pageIsLocal = pageHost === '' || pageHost === 'localhost' || pageHost === '127.0.0.1'
+  const configuredIsLocal = !configured
+    || configured.includes('localhost')
+    || configured.includes('127.0.0.1')
+
+  if (!pageIsLocal && configuredIsLocal) return RENDER_API
+  return configured || LOCAL_API
 }
 
 export const tokenStore = {
