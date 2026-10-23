@@ -1,7 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { homeFor } from '../../auth/homeFor'
+import { BrandMark } from '../../components/BrandMark'
+import { TickIcon } from '../../components/TickIcon'
 
 const steps = [
   ['Post', 'Describe your marketing need once.'],
@@ -105,32 +107,88 @@ function useReveal() {
 export function Landing() {
   const { user } = useAuth()
   const root = useReveal()
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   if (user) return <Navigate to={homeFor(user.role)} replace />
 
   return (
-    <div className="lp" ref={root}>
-      <header className="landing-nav">
-        <div className="brand">
-          <span className="brand-mark">BB</span>
-          <span>Torq</span>
-        </div>
-        <nav className="lp-links" aria-label="Sections">
-          <a href="#how">How it works</a>
-          <a href="#brands">For brands</a>
-          <a href="#providers">For providers</a>
-          <a href="#faq">FAQ</a>
-        </nav>
-        <div className="actions">
-          <Link to="/login" className="btn ghost">
-            Log in
+    <div className="lp-page" ref={root}>
+      <header className={`landing-nav ${scrolled ? 'scrolled' : ''}`}>
+        <div className="landing-nav-inner">
+          <Link to="/" className="brand" aria-label="TORQ Home">
+            <span className="brand-mark">
+              <BrandMark size={18} />
+            </span>
+            <div className="brand-text-block">
+              <span className="brand-title">TORQ</span>
+              <span className="brand-badge">BrandBridge</span>
+            </div>
           </Link>
-          <Link to="/register" className="btn primary">
-            Get started
-          </Link>
+
+          <nav className="lp-links" aria-label="Sections">
+            <a href="#how" className="lp-nav-link">How it works</a>
+            <a href="#brands" className="lp-nav-link">For brands</a>
+            <a href="#providers" className="lp-nav-link">For providers</a>
+            <a href="#faq" className="lp-nav-link">FAQ</a>
+          </nav>
+
+          <div className="landing-actions">
+            <Link to="/login" className="btn ghost nav-login-btn">
+              Log in
+            </Link>
+            <Link to="/register" className="btn primary nav-cta-btn">
+              <span>Get started</span>
+              <span className="cta-arrow" aria-hidden="true">→</span>
+            </Link>
+            <button
+              type="button"
+              className="mobile-nav-toggle"
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                {mobileOpen ? (
+                  <path d="M18 6L6 18M6 6l12 12" />
+                ) : (
+                  <path d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {mobileOpen && (
+          <div className="mobile-nav-dropdown">
+            <nav className="mobile-nav-links">
+              <a href="#how" onClick={() => setMobileOpen(false)}>How it works</a>
+              <a href="#brands" onClick={() => setMobileOpen(false)}>For brands</a>
+              <a href="#providers" onClick={() => setMobileOpen(false)}>For providers</a>
+              <a href="#faq" onClick={() => setMobileOpen(false)}>FAQ</a>
+            </nav>
+            <div className="mobile-nav-actions">
+              <Link to="/login" className="btn ghost block" onClick={() => setMobileOpen(false)}>
+                Log in
+              </Link>
+              <Link to="/register" className="btn primary block" onClick={() => setMobileOpen(false)}>
+                Get started →
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
-      <section className="hero">
+      <div className="lp">
+        <section className="hero">
         <span className="eyebrow">✨ The marketing marketplace for growing brands</span>
         <h1>
           Post your marketing need once. Compare proposals. <span className="hl">Choose the right specialist.</span>
@@ -147,9 +205,9 @@ export function Landing() {
           </Link>
         </div>
         <ul className="hero-points">
-          <li>✔ Free to post</li>
-          <li>✔ Verified providers</li>
-          <li>✔ Milestone-protected payments</li>
+          <li><TickIcon size={14} strokeWidth={2} /> Free to post</li>
+          <li><TickIcon size={14} strokeWidth={2} /> Verified providers</li>
+          <li><TickIcon size={14} strokeWidth={2} /> Milestone-protected payments</li>
         </ul>
       </section>
 
@@ -169,7 +227,7 @@ export function Landing() {
           ].map(([name, price, days, rev, star]) => (
             <div key={name as string} className={`preview-card ${star ? 'star' : ''}`}>
               <div className="preview-name">
-                {name} <span className="badge success">✔ Verified</span>
+                {name} <span className="badge success"><TickIcon size={11} strokeWidth={2} /> Verified</span>
               </div>
               <div className="preview-price">{price}</div>
               <div className="muted small">
@@ -229,7 +287,7 @@ export function Landing() {
               <span className="pain-arrow" aria-hidden>
                 →
               </span>
-              <span className="pain-after">✔ {after}</span>
+              <span className="pain-after"><TickIcon size={14} strokeWidth={2} /> {after}</span>
             </div>
           ))}
         </div>
@@ -246,7 +304,7 @@ export function Landing() {
             </p>
             <ul className="perks">
               {brandPerks.map((p) => (
-                <li key={p}>✔ {p}</li>
+                <li key={p}><TickIcon size={14} strokeWidth={2} /> {p}</li>
               ))}
             </ul>
             <Link to="/register?role=business" className="btn primary">
@@ -262,7 +320,7 @@ export function Landing() {
             </p>
             <ul className="perks">
               {providerPerks.map((p) => (
-                <li key={p}>✔ {p}</li>
+                <li key={p}><TickIcon size={14} strokeWidth={2} /> {p}</li>
               ))}
             </ul>
             <Link to="/register?role=provider" className="btn ghost">
@@ -353,12 +411,18 @@ export function Landing() {
 
       <footer className="lp-footer">
         <div className="brand">
-          <span className="brand-mark">BB</span>
-          <span>Torq</span>
+          <span className="brand-mark">
+            <BrandMark size={18} />
+          </span>
+          <div className="brand-text-block">
+            <span className="brand-title">TORQ</span>
+            <span className="brand-badge">BrandBridge</span>
+          </div>
         </div>
         <span className="muted small">Where brands meet marketing talent.</span>
         <span className="muted small">© {YEAR} Torq</span>
       </footer>
     </div>
-  )
+  </div>
+)
 }

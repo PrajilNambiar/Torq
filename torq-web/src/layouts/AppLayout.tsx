@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { BrandMark } from '../components/BrandMark'
 import { UserRole, labels } from '../types/enums'
 
 const nav: Record<UserRole, { to: string; label: string; end?: boolean }[]> = {
@@ -31,18 +33,67 @@ const nav: Record<UserRole, { to: string; label: string; end?: boolean }[]> = {
 export function AppLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   if (!user) return null
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      {/* Top navigation bar for mobile/responsive screens */}
+      <header className="app-topbar">
+        <div className="app-topbar-left">
+          <button
+            type="button"
+            className="app-topbar-toggle"
+            aria-label="Toggle navigation menu"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              {mobileMenuOpen ? (
+                <path d="M18 6L6 18M6 6l12 12" />
+              ) : (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+          <div className="brand">
+            <span className="brand-mark">
+              <BrandMark size={16} />
+            </span>
+            <div className="brand-text-block">
+              <span className="brand-title">TORQ</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="app-topbar-right">
+          <span className="topbar-badge">{labels.userRole[user.role]}</span>
+          <div className="topbar-user">
+            <span className="topbar-avatar">{user.displayName[0]?.toUpperCase() ?? 'U'}</span>
+            <span className="topbar-name">{user.displayName}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Sidebar Navigation */}
+      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="brand">
-          <span className="brand-mark">BB</span>
-          <span>Torq</span>
+          <span className="brand-mark">
+            <BrandMark size={18} />
+          </span>
+          <div className="brand-text-block">
+            <span className="brand-title">TORQ</span>
+            <span className="brand-badge">BrandBridge</span>
+          </div>
         </div>
         <nav>
           {nav[user.role].map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? 'active' : '')}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => (isActive ? 'active' : '')}
+              onClick={() => setMobileMenuOpen(false)}
+            >
               {item.label}
             </NavLink>
           ))}
@@ -63,6 +114,9 @@ export function AppLayout() {
           </button>
         </div>
       </aside>
+
+      {mobileMenuOpen && <div className="sidebar-backdrop" onClick={() => setMobileMenuOpen(false)} />}
+
       <main className="content">
         <Outlet />
       </main>
