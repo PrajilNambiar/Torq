@@ -158,12 +158,7 @@ public partial class Program
             });
         });
 
-        var corsOrigins = new List<string>
-        {
-            "http://localhost:3000",
-            "https://localhost:3000",
-            "https://torq-1.onrender.com"
-        };
+        var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()?.ToList() ?? [];
         var extraOrigins = builder.Configuration["Cors:ExtraOrigins"];
         if (!string.IsNullOrWhiteSpace(extraOrigins))
         {
@@ -173,9 +168,16 @@ public partial class Program
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("ui", policy =>
+            {
+                if (corsOrigins.Count == 0)
+                {
+                    return;
+                }
+
                 policy.WithOrigins(corsOrigins.ToArray())
                     .AllowAnyHeader()
-                    .AllowAnyMethod());
+                    .AllowAnyMethod();
+            });
         });
 
         var app = builder.Build();
