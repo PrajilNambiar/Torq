@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { homeFor } from '../../auth/homeFor'
 import { BrandMark } from '../../components/BrandMark'
-import { ErrorBox, Field } from '../../components/ui'
+import { ErrorBox, TextBox } from '../../components/ui'
 
 export function Login() {
   const { user, login } = useAuth()
@@ -48,18 +48,15 @@ export function Login() {
         </Link>
         <h1>Welcome back</h1>
         <ErrorBox error={error} />
-        <Field label="Email">
-          <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </Field>
-        <Field label="Password">
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
+        <TextBox label="Email" type="email" required autoComplete="email" value={email} onChange={setEmail} />
+        <TextBox
+          label="Password"
+          type="password"
+          required
+          autoComplete="current-password"
+          value={password}
+          onChange={setPassword}
+        />
         <button className="btn primary block" disabled={busy}>
           {busy ? 'Signing in…' : 'Log in'}
         </button>

@@ -1,12 +1,23 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { campaignsApi, requirementsApi } from '../../api'
+import { useAuth } from '../../auth/AuthContext'
 import { StatusBadge } from '../../components/StatusBadge'
-import { Card, EmptyState, ErrorBox, PageHeader, Spinner, Stat } from '../../components/ui'
+import { Card, EmptyState, ErrorBox, Spinner, Stat } from '../../components/ui'
+import {
+  IconAlert,
+  IconBriefcase,
+  IconCheckCircle,
+  IconClipboard,
+  IconFilePlus,
+  IconInbox,
+  IconMegaphone,
+} from '../../components/icons'
 import { CampaignStatus, RequirementStatus } from '../../types/enums'
 import { budget, date, money, shortId } from '../../lib/format'
 
 export function BusinessDashboard() {
+  const { user } = useAuth()
   const reqs = useQuery({ queryKey: ['requirements', 1], queryFn: () => requirementsApi.list(1, 50) })
   const camps = useQuery({ queryKey: ['campaigns', 1], queryFn: () => campaignsApi.list(1, 50) })
 
@@ -21,42 +32,58 @@ export function BusinessDashboard() {
   const needsAction = campaigns.filter((c) =>
     ([CampaignStatus.PendingFunding, CampaignStatus.AwaitingApproval] as number[]).includes(c.status),
   )
+  const activeCampaigns = campaigns.filter((c) => c.status !== CampaignStatus.Completed && c.status !== CampaignStatus.Cancelled)
   const titleOf = (id: string) => requirements.find((r) => r.id === id)?.title ?? `Requirement ${shortId(id)}`
+  const firstName = user?.displayName?.split(' ')[0] ?? 'there'
+  const waitingCount = needsAction.length + reviewing.length
 
   return (
-    <>
-      <PageHeader
-        title="Dashboard"
-        actions={
+    <div className="dash">
+      <section className="dash-welcome">
+        <div className="dash-welcome-copy">
+          <p className="dash-kicker">Brand workspace</p>
+          <h1>Welcome back, {firstName}</h1>
+          <p className="muted dash-welcome-sub">
+            Post briefs, compare proposals, and keep campaigns on track from one place.
+          </p>
+        </div>
+        <div className="dash-welcome-actions">
           <Link to="/business/requirements/new" className="btn primary">
             Post a requirement
           </Link>
-        }
-      />
+        </div>
+      </section>
+
       <ErrorBox error={reqs.error ?? camps.error} />
 
       <div className="stats">
-        <Stat label="Open requirements" value={openCount} />
-        <Stat label="Proposals to review" value={reviewing.length} />
-        <Stat label="Active campaigns" value={campaigns.filter((c) => c.status !== CampaignStatus.Completed).length} />
-        <Stat label="Waiting on you" value={needsAction.length} />
+        <Stat label="Open requirements" value={openCount} tone="blue" icon={<IconClipboard size={18} />} />
+        <Stat label="Proposals to review" value={reviewing.length} tone="cyan" icon={<IconInbox size={18} />} />
+        <Stat label="Active campaigns" value={activeCampaigns.length} tone="green" icon={<IconMegaphone size={18} />} />
+        <Stat label="Waiting on you" value={waitingCount} tone="amber" icon={<IconAlert size={18} />} />
       </div>
 
       <div className="grid-2">
-        <Card title="Needs your action">
-          {needsAction.length === 0 && reviewing.length === 0 ? (
-            <EmptyState>Nothing waiting on you right now.</EmptyState>
+        <Card title="Needs your action" className="dash-panel">
+          {waitingCount === 0 ? (
+            <EmptyState icon={<IconCheckCircle size={28} />}>Nothing waiting on you right now.</EmptyState>
           ) : (
-            <ul className="list">
+            <ul className="list dash-list">
               {reviewing.map((r) => (
                 <li key={r.id}>
-                  <Link to={`/business/requirements/${r.id}/proposals`}>{r.title}</Link>
-                  <span className="muted">Compare proposals</span>
+                  <div>
+                    <Link to={`/business/requirements/${r.id}/proposals`}>{r.title}</Link>
+                    <div className="muted small">Compare proposals</div>
+                  </div>
+                  <StatusBadge kind="requirement" status={r.status} />
                 </li>
               ))}
               {needsAction.map((c) => (
                 <li key={c.id}>
-                  <Link to={`/campaigns/${c.id}`}>{titleOf(c.requirementId)}</Link>
+                  <div>
+                    <Link to={`/campaigns/${c.id}`}>{titleOf(c.requirementId)}</Link>
+                    <div className="muted small">Campaign action needed</div>
+                  </div>
                   <StatusBadge kind="campaign" status={c.status} />
                 </li>
               ))}
@@ -64,13 +91,20 @@ export function BusinessDashboard() {
           )}
         </Card>
 
-        <Card title="Recent requirements" actions={<Link to="/business/requirements">View all</Link>}>
+        <Card title="Recent requirements" actions={<Link to="/business/requirements">View all</Link>} className="dash-panel">
           {requirements.length === 0 ? (
-            <EmptyState>
-              You haven't posted anything yet. <Link to="/business/requirements/new">Post your first requirement</Link>.
+            <EmptyState
+              icon={<IconFilePlus size={28} />}
+              action={
+                <Link to="/business/requirements/new" className="btn ghost small">
+                  Post your first requirement
+                </Link>
+              }
+            >
+              You haven&apos;t posted anything yet.
             </EmptyState>
           ) : (
-            <ul className="list">
+            <ul className="list dash-list">
               {requirements.slice(0, 6).map((r) => (
                 <li key={r.id}>
                   <div>
@@ -87,9 +121,11 @@ export function BusinessDashboard() {
         </Card>
       </div>
 
-      <Card title="Campaigns" actions={<Link to="/campaigns">View all</Link>}>
+      <Card title="Campaigns" actions={<Link to="/campaigns">View all</Link>} className="dash-panel">
         {campaigns.length === 0 ? (
-          <EmptyState>Campaigns appear here once you select a proposal.</EmptyState>
+          <EmptyState icon={<IconBriefcase size={28} />}>
+            Campaigns appear here once you select a proposal.
+          </EmptyState>
         ) : (
           <table className="table">
             <thead>
@@ -117,6 +153,6 @@ export function BusinessDashboard() {
           </table>
         )}
       </Card>
-    </>
+    </div>
   )
 }

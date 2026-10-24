@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { homeFor } from '../../auth/homeFor'
 import { BrandMark } from '../../components/BrandMark'
-import { ErrorBox, Field } from '../../components/ui'
+import { ErrorBox, TextBox } from '../../components/ui'
 import { UserRole } from '../../types/enums'
 
 export function Register() {
@@ -74,22 +74,24 @@ export function Register() {
         </div>
 
         <ErrorBox error={error} />
-        <Field label={role === UserRole.Business ? 'Business name' : 'Your name or agency name'}>
-          <input required maxLength={120} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-        </Field>
-        <Field label="Email">
-          <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </Field>
-        <Field label="Password" hint="At least 8 characters, with upper case, lower case and a digit.">
-          <input
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
+        <TextBox
+          label={role === UserRole.Business ? 'Business name' : 'Your name or agency name'}
+          required
+          maxLength={120}
+          value={displayName}
+          onChange={setDisplayName}
+        />
+        <TextBox label="Email" type="email" required autoComplete="email" value={email} onChange={setEmail} />
+        <TextBox
+          label="Password"
+          type="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          hint="At least 8 characters, with upper case, lower case and a digit."
+          value={password}
+          onChange={setPassword}
+        />
         <button className="btn primary block" disabled={busy}>
           {busy ? 'Creating account…' : 'Create account'}
         </button>
