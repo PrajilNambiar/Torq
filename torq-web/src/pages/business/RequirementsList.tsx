@@ -32,32 +32,34 @@ export function RequirementsList() {
           <EmptyState>No requirements yet.</EmptyState>
         ) : (
           <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Category</th>
-                  <th>Budget</th>
-                  <th>Deadline</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((r) => (
-                  <tr key={r.id}>
-                    <td>
-                      <Link to={`/business/requirements/${r.id}`}>{r.title}</Link>
-                    </td>
-                    <td>{r.category}</td>
-                    <td>{budget(r.budgetMin, r.budgetMax, r.currency)}</td>
-                    <td>{date(r.proposalDeadlineAt)}</td>
-                    <td>
-                      <StatusBadge kind="requirement" status={r.status} />
-                    </td>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Budget</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.items.map((r) => (
+                    <tr key={r.id}>
+                      <td>
+                        <Link to={`/business/requirements/${r.id}`}>{r.title}</Link>
+                      </td>
+                      <td>{r.category}</td>
+                      <td>{budget(r.budgetMin, r.budgetMax, r.currency)}</td>
+                      <td>{date(r.proposalDeadlineAt)}</td>
+                      <td>
+                        <StatusBadge kind="requirement" status={r.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <Pager page={data.page} pageSize={data.pageSize} total={data.total} onPage={setPage} />
           </>
         )}

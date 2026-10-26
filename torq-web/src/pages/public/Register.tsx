@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { homeFor } from '../../auth/homeFor'
-import { BrandMark } from '../../components/BrandMark'
-import { ErrorBox, Field } from '../../components/ui'
+import { AuthShell } from '../../components/AuthShell'
+import { ErrorBox, TextBox } from '../../components/ui'
+import { IconLock, IconMail, IconUser } from '../../components/ui/icons'
 import { UserRole } from '../../types/enums'
 
 export function Register() {
@@ -34,22 +35,12 @@ export function Register() {
   }
 
   return (
-    <div className="auth-page">
-      <Link to="/" className="auth-back">
-        ← Back to home
-      </Link>
-      <form className="auth-card" onSubmit={submit}>
-        <Link to="/" className="brand" aria-label="TORQ Home">
-          <span className="brand-mark">
-            <BrandMark size={18} />
-          </span>
-          <div className="brand-text-block">
-            <span className="brand-title">TORQ</span>
-            <span className="brand-badge">BrandBridge</span>
-          </div>
-        </Link>
-        <h1>Create your account</h1>
-
+    <AuthShell
+      mode="register"
+      title="Create your TORQ account"
+      subtitle="Start by choosing how you’ll use Torq — then we’ll set up your workspace."
+    >
+      <form className="auth-form" onSubmit={submit}>
         <div className="role-toggle" role="radiogroup" aria-label="Account type">
           <button
             type="button"
@@ -74,29 +65,41 @@ export function Register() {
         </div>
 
         <ErrorBox error={error} />
-        <Field label={role === UserRole.Business ? 'Business name' : 'Your name or agency name'}>
-          <input required maxLength={120} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-        </Field>
-        <Field label="Email">
-          <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </Field>
-        <Field label="Password" hint="At least 8 characters, with upper case, lower case and a digit.">
-          <input
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
-        <button className="btn primary block" disabled={busy}>
+        <TextBox
+          label={role === UserRole.Business ? 'Business name' : 'Your name or agency name'}
+          required
+          maxLength={120}
+          placeholder={role === UserRole.Business ? 'Acme Foods' : 'Your name or agency'}
+          leadingIcon={<IconUser />}
+          value={displayName}
+          onChange={setDisplayName}
+        />
+        <TextBox
+          label="Email address"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="Enter your email address"
+          leadingIcon={<IconMail />}
+          value={email}
+          onChange={setEmail}
+        />
+        <TextBox
+          label="Password"
+          type="password"
+          required
+          minLength={8}
+          autoComplete="new-password"
+          placeholder="Create a password"
+          hint="At least 8 characters, with upper case, lower case and a digit."
+          leadingIcon={<IconLock />}
+          value={password}
+          onChange={setPassword}
+        />
+        <button className="btn primary block auth-submit" disabled={busy}>
           {busy ? 'Creating account…' : 'Create account'}
         </button>
-        <p className="muted center">
-          Already have an account? <Link to="/login">Log in</Link>
-        </p>
       </form>
-    </div>
+    </AuthShell>
   )
 }
