@@ -24,32 +24,34 @@ export function CampaignsList() {
           <EmptyState>No campaigns yet.</EmptyState>
         ) : (
           <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Campaign</th>
-                  <th>Agreed price</th>
-                  <th>Platform fee</th>
-                  <th>Started</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((c) => (
-                  <tr key={c.id}>
-                    <td>
-                      <Link to={`/campaigns/${c.id}`}>Campaign {shortId(c.id)}</Link>
-                    </td>
-                    <td>{money(c.agreedPrice, c.currency)}</td>
-                    <td>{money(c.platformFeeAmount, c.currency)}</td>
-                    <td>{date(c.createdAt)}</td>
-                    <td>
-                      <StatusBadge kind="campaign" status={c.status} />
-                    </td>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Campaign</th>
+                    <th>Agreed price</th>
+                    <th>Platform fee</th>
+                    <th>Started</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.items.map((c) => (
+                    <tr key={c.id}>
+                      <td>
+                        <Link to={`/campaigns/${c.id}`}>Campaign {shortId(c.id)}</Link>
+                      </td>
+                      <td>{money(c.agreedPrice, c.currency)}</td>
+                      <td>{money(c.platformFeeAmount, c.currency)}</td>
+                      <td>{date(c.createdAt)}</td>
+                      <td>
+                        <StatusBadge kind="campaign" status={c.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <Pager page={data.page} pageSize={data.pageSize} total={data.total} onPage={setPage} />
           </>
         )}

@@ -127,30 +127,32 @@ export function BusinessDashboard() {
             Campaigns appear here once you select a proposal.
           </EmptyState>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Campaign</th>
-                <th>Agreed price</th>
-                <th>Started</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {campaigns.slice(0, 6).map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link to={`/campaigns/${c.id}`}>{titleOf(c.requirementId)}</Link>
-                  </td>
-                  <td>{money(c.agreedPrice, c.currency)}</td>
-                  <td>{date(c.createdAt)}</td>
-                  <td>
-                    <StatusBadge kind="campaign" status={c.status} />
-                  </td>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Campaign</th>
+                  <th>Agreed price</th>
+                  <th>Started</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {campaigns.slice(0, 6).map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <Link to={`/campaigns/${c.id}`}>{titleOf(c.requirementId)}</Link>
+                    </td>
+                    <td>{money(c.agreedPrice, c.currency)}</td>
+                    <td>{date(c.createdAt)}</td>
+                    <td>
+                      <StatusBadge kind="campaign" status={c.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
     </div>
