@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { homeFor } from '../../auth/homeFor'
-import { BrandMark } from '../../components/BrandMark'
-import { ErrorBox, Field } from '../../components/ui'
+import { AuthShell } from '../../components/AuthShell'
+import { ErrorBox, TextBox } from '../../components/ui'
+import { IconLock, IconMail } from '../../components/ui/icons'
 
 export function Login() {
   const { user, login } = useAuth()
@@ -32,41 +33,37 @@ export function Login() {
   }
 
   return (
-    <div className="auth-page">
-      <Link to="/" className="auth-back">
-        ← Back to home
-      </Link>
-      <form className="auth-card" onSubmit={submit}>
-        <Link to="/" className="brand" aria-label="TORQ Home">
-          <span className="brand-mark">
-            <BrandMark size={18} />
-          </span>
-          <div className="brand-text-block">
-            <span className="brand-title">TORQ</span>
-            <span className="brand-badge">BrandBridge</span>
-          </div>
-        </Link>
-        <h1>Welcome back</h1>
+    <AuthShell
+      mode="login"
+      title="Welcome to TORQ"
+      subtitle="Sign in to post briefs, send proposals, and run campaigns in one place."
+    >
+      <form className="auth-form" onSubmit={submit}>
         <ErrorBox error={error} />
-        <Field label="Email">
-          <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </Field>
-        <Field label="Password">
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
-        <button className="btn primary block" disabled={busy}>
-          {busy ? 'Signing in…' : 'Log in'}
+        <TextBox
+          label="Email address"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="Enter your email address"
+          leadingIcon={<IconMail />}
+          value={email}
+          onChange={setEmail}
+        />
+        <TextBox
+          label="Password"
+          type="password"
+          required
+          autoComplete="current-password"
+          placeholder="Enter your password"
+          leadingIcon={<IconLock />}
+          value={password}
+          onChange={setPassword}
+        />
+        <button className="btn primary block auth-submit" disabled={busy}>
+          {busy ? 'Signing in…' : 'Sign In'}
         </button>
-        <p className="muted center">
-          New to Torq? <Link to="/register">Create an account</Link>
-        </p>
       </form>
-    </div>
+    </AuthShell>
   )
 }

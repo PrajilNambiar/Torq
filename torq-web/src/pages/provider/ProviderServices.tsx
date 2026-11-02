@@ -1,7 +1,18 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { providersApi } from '../../api'
-import { Card, EmptyState, ErrorBox, Field, PageHeader, Spinner } from '../../components/ui'
+import {
+  Card,
+  EmptyState,
+  ErrorBox,
+  FormGrid,
+  PageHeader,
+  Select,
+  Spinner,
+  TextArea,
+  TextBox,
+  serviceCategoryOptions,
+} from '../../components/ui'
 import { useToast } from '../../components/Toast'
 import { PricingModel, SERVICE_CATEGORIES, labels, optionsOf } from '../../types/enums'
 import { blank, money, num } from '../../lib/format'
@@ -38,9 +49,6 @@ export function ProviderServices() {
     },
     onError: toast.error,
   })
-
-  const set = (key: 'category' | 'title' | 'description' | 'startingPrice' | 'typicalDeliveryDays') =>
-    (e: { target: { value: string } }) => setForm({ ...form, [key]: e.target.value })
 
   return (
     <>
@@ -79,39 +87,47 @@ export function ProviderServices() {
               add.mutate()
             }}
           >
-            <Field label="Category">
-              <select value={form.category} onChange={set('category')}>
-                {SERVICE_CATEGORIES.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Title">
-              <input required value={form.title} onChange={set('title')} placeholder="3 Instagram reels + stories" />
-            </Field>
-            <Field label="Pricing model">
-              <select
-                value={form.pricingModel}
-                onChange={(e) => setForm({ ...form, pricingModel: Number(e.target.value) as PricingModel })}
-              >
-                {optionsOf(PricingModel).map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <div className="form-grid">
-              <Field label="Starting price (₹)">
-                <input type="number" min={0} value={form.startingPrice} onChange={set('startingPrice')} />
-              </Field>
-              <Field label="Typical delivery (days)">
-                <input type="number" min={1} value={form.typicalDeliveryDays} onChange={set('typicalDeliveryDays')} />
-              </Field>
-            </div>
-            <Field label="Description">
-              <textarea rows={3} value={form.description} onChange={set('description')} />
-            </Field>
+            <Select
+              label="Category"
+              required
+              value={form.category}
+              onChange={(category) => setForm({ ...form, category })}
+              options={serviceCategoryOptions()}
+            />
+            <TextBox
+              label="Title"
+              required
+              value={form.title}
+              onChange={(title) => setForm({ ...form, title })}
+              placeholder="3 Instagram reels + stories"
+            />
+            <Select
+              label="Pricing model"
+              value={form.pricingModel}
+              onChange={(pricingModel) => setForm({ ...form, pricingModel })}
+              options={optionsOf(PricingModel).map((o) => ({ value: o.value as PricingModel, label: o.label }))}
+            />
+            <FormGrid>
+              <TextBox
+                label="Starting price (₹)"
+                type="number"
+                min={0}
+                value={form.startingPrice}
+                onChange={(startingPrice) => setForm({ ...form, startingPrice })}
+              />
+              <TextBox
+                label="Typical delivery (days)"
+                type="number"
+                min={1}
+                value={form.typicalDeliveryDays}
+                onChange={(typicalDeliveryDays) => setForm({ ...form, typicalDeliveryDays })}
+              />
+            </FormGrid>
+            <TextArea
+              label="Description"
+              value={form.description}
+              onChange={(description) => setForm({ ...form, description })}
+            />
             <button className="btn primary" disabled={add.isPending}>
               Add service
             </button>

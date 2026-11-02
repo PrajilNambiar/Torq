@@ -1,32 +1,49 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { BrandMark } from '../components/BrandMark'
+import {
+  IconBriefcase,
+  IconClipboard,
+  IconFilePlus,
+  IconFlag,
+  IconHome,
+  IconImage,
+  IconLayers,
+  IconMegaphone,
+  IconQueue,
+  IconSearch,
+  IconShare,
+  IconUser,
+  IconUsers,
+} from '../components/icons'
 import { UserRole, labels } from '../types/enums'
 
-const nav: Record<UserRole, { to: string; label: string; end?: boolean }[]> = {
+type NavItem = { to: string; label: string; end?: boolean; icon: ReactNode }
+
+const nav: Record<UserRole, NavItem[]> = {
   [UserRole.Business]: [
-    { to: '/business', label: 'Dashboard', end: true },
-    { to: '/business/requirements', label: 'Requirements' },
-    { to: '/business/requirements/new', label: 'Post a requirement' },
-    { to: '/campaigns', label: 'Campaigns' },
-    { to: '/business/profile', label: 'Business profile' },
+    { to: '/business', label: 'Dashboard', end: true, icon: <IconHome /> },
+    { to: '/business/requirements', label: 'Requirements', icon: <IconClipboard /> },
+    { to: '/business/requirements/new', label: 'Post a requirement', icon: <IconFilePlus /> },
+    { to: '/campaigns', label: 'Campaigns', icon: <IconMegaphone /> },
+    { to: '/business/profile', label: 'Business profile', icon: <IconUser /> },
   ],
   [UserRole.Provider]: [
-    { to: '/provider', label: 'Dashboard', end: true },
-    { to: '/provider/opportunities', label: 'Opportunities' },
-    { to: '/campaigns', label: 'Campaigns' },
-    { to: '/provider/profile', label: 'Profile' },
-    { to: '/provider/services', label: 'Services' },
-    { to: '/provider/portfolio', label: 'Portfolio' },
-    { to: '/provider/social', label: 'Social accounts' },
+    { to: '/provider', label: 'Dashboard', end: true, icon: <IconHome /> },
+    { to: '/provider/opportunities', label: 'Opportunities', icon: <IconSearch /> },
+    { to: '/campaigns', label: 'Campaigns', icon: <IconMegaphone /> },
+    { to: '/provider/profile', label: 'Profile', icon: <IconUser /> },
+    { to: '/provider/services', label: 'Services', icon: <IconLayers /> },
+    { to: '/provider/portfolio', label: 'Portfolio', icon: <IconImage /> },
+    { to: '/provider/social', label: 'Social accounts', icon: <IconShare /> },
   ],
   [UserRole.Admin]: [
-    { to: '/admin', label: 'Overview', end: true },
-    { to: '/admin/requirements', label: 'Requirement queue' },
-    { to: '/admin/providers', label: 'Provider verification' },
-    { to: '/admin/disputes', label: 'Disputes' },
-    { to: '/admin/campaigns', label: 'Campaigns' },
+    { to: '/admin', label: 'Overview', end: true, icon: <IconHome /> },
+    { to: '/admin/requirements', label: 'Requirement queue', icon: <IconQueue /> },
+    { to: '/admin/providers', label: 'Provider verification', icon: <IconUsers /> },
+    { to: '/admin/disputes', label: 'Disputes', icon: <IconFlag /> },
+    { to: '/admin/campaigns', label: 'Campaigns', icon: <IconBriefcase /> },
   ],
 }
 
@@ -38,7 +55,6 @@ export function AppLayout() {
 
   return (
     <div className="shell">
-      {/* Top navigation bar for mobile/responsive screens */}
       <header className="app-topbar">
         <div className="app-topbar-left">
           <button
@@ -74,7 +90,6 @@ export function AppLayout() {
         </div>
       </header>
 
-      {/* Sidebar Navigation */}
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="brand">
           <span className="brand-mark">
@@ -94,7 +109,8 @@ export function AppLayout() {
               className={({ isActive }) => (isActive ? 'active' : '')}
               onClick={() => setMobileMenuOpen(false)}
             >
-              {item.label}
+              <span className="nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>

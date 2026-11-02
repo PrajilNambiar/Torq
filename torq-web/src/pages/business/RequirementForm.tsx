@@ -2,7 +2,19 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { requirementsApi } from '../../api'
-import { Alert, Card, ErrorBox, Field, PageHeader, Spinner } from '../../components/ui'
+import {
+  Alert,
+  Card,
+  DateField,
+  ErrorBox,
+  FormGrid,
+  PageHeader,
+  Select,
+  Spinner,
+  TextArea,
+  TextBox,
+  serviceCategoryOptions,
+} from '../../components/ui'
 import { useToast } from '../../components/Toast'
 import { RequirementStatus, SERVICE_CATEGORIES } from '../../types/enums'
 import type { CreateRequirementRequest, RequirementDto } from '../../types/api'
@@ -107,7 +119,7 @@ function RequirementFormBody({ id, initial }: { id?: string; initial: FormState 
     onError: toast.error,
   })
 
-  const set = (key: keyof FormState) => (e: { target: { value: string } }) => setForm({ ...form, [key]: e.target.value })
+  const set = (key: keyof FormState) => (value: string) => setForm({ ...form, [key]: value })
   const budgetInvalid = num(form.budgetMin) !== null && num(form.budgetMax) !== null && num(form.budgetMax)! < num(form.budgetMin)!
 
   function onSubmit(e: FormEvent) {
@@ -125,61 +137,100 @@ function RequirementFormBody({ id, initial }: { id?: string; initial: FormState 
       />
       <form onSubmit={onSubmit}>
         <Card title="What do you need?">
-          <div className="form-grid">
-            <Field label="Campaign title">
-              <input required maxLength={200} value={form.title} onChange={set('title')} placeholder="Create 5 Instagram reels for new café launch" />
-            </Field>
-            <Field label="Marketing category">
-              <select value={form.category} onChange={set('category')}>
-                {SERVICE_CATEGORIES.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Goal">
-              <textarea required rows={3} value={form.goal} onChange={set('goal')} placeholder="Reach local customers and increase store visits" />
-            </Field>
-            <Field label="Expected deliverables">
-              <textarea required rows={3} value={form.expectedDeliverables} onChange={set('expectedDeliverables')} placeholder="5 reels, 10 stories, 1 collaboration post" />
-            </Field>
-          </div>
+          <FormGrid>
+            <TextBox
+              label="Campaign title"
+              required
+              maxLength={200}
+              value={form.title}
+              onChange={set('title')}
+              placeholder="Create 5 Instagram reels for new café launch"
+            />
+            <Select
+              label="Marketing category"
+              required
+              value={form.category}
+              onChange={set('category')}
+              options={serviceCategoryOptions()}
+            />
+            <TextArea
+              label="Goal"
+              required
+              value={form.goal}
+              onChange={set('goal')}
+              placeholder="Reach local customers and increase store visits"
+            />
+            <TextArea
+              label="Expected deliverables"
+              required
+              value={form.expectedDeliverables}
+              onChange={set('expectedDeliverables')}
+              placeholder="5 reels, 10 stories, 1 collaboration post"
+            />
+          </FormGrid>
         </Card>
 
         <Card title="Audience">
-          <div className="form-grid">
-            <Field label="Target audience">
-              <input value={form.targetAudience} onChange={set('targetAudience')} placeholder="Age 18–35, within 15 km, food/lifestyle interest" />
-            </Field>
-            <Field label="Location">
-              <input value={form.location} onChange={set('location')} placeholder="Kochi" />
-            </Field>
-            <Field label="Languages" hint="Comma separated">
-              <input required value={form.languages} onChange={set('languages')} placeholder="Malayalam, English" />
-            </Field>
-            <Field label="How will you choose?">
-              <input value={form.selectionPreference} onChange={set('selectionPreference')} placeholder="Audience match + content quality + price" />
-            </Field>
-          </div>
+          <FormGrid>
+            <TextBox
+              label="Target audience"
+              value={form.targetAudience}
+              onChange={set('targetAudience')}
+              placeholder="Age 18–35, within 15 km, food/lifestyle interest"
+            />
+            <TextBox label="Location" value={form.location} onChange={set('location')} placeholder="Kochi" />
+            <TextBox
+              label="Languages"
+              hint="Comma separated"
+              required
+              value={form.languages}
+              onChange={set('languages')}
+              placeholder="Malayalam, English"
+            />
+            <TextBox
+              label="How will you choose?"
+              value={form.selectionPreference}
+              onChange={set('selectionPreference')}
+              placeholder="Audience match + content quality + price"
+            />
+          </FormGrid>
         </Card>
 
         <Card title="Budget and timeline">
-          <div className="form-grid">
-            <Field label="Budget from (₹)">
-              <input type="number" min={0} value={form.budgetMin} onChange={set('budgetMin')} placeholder="50000" />
-            </Field>
-            <Field label="Budget up to (₹)">
-              <input type="number" min={0} value={form.budgetMax} onChange={set('budgetMax')} placeholder="80000" />
-            </Field>
-            <Field label="Timeline (days)">
-              <input type="number" min={1} value={form.timelineDays} onChange={set('timelineDays')} placeholder="28" />
-            </Field>
-            <Field label="Proposal deadline">
-              <input type="date" value={form.proposalDeadlineAt} onChange={set('proposalDeadlineAt')} />
-            </Field>
-            <Field label="Timeline notes">
-              <textarea rows={2} value={form.timelineNotes} onChange={set('timelineNotes')} placeholder="Launch is on the 15th; reels needed a week before." />
-            </Field>
-          </div>
+          <FormGrid>
+            <TextBox
+              label="Budget from (₹)"
+              type="number"
+              min={0}
+              value={form.budgetMin}
+              onChange={set('budgetMin')}
+              placeholder="50000"
+            />
+            <TextBox
+              label="Budget up to (₹)"
+              type="number"
+              min={0}
+              value={form.budgetMax}
+              onChange={set('budgetMax')}
+              placeholder="80000"
+            />
+            <TextBox
+              label="Timeline (days)"
+              type="number"
+              min={1}
+              value={form.timelineDays}
+              onChange={set('timelineDays')}
+              placeholder="28"
+            />
+            <DateField label="Proposal deadline" value={form.proposalDeadlineAt} onChange={set('proposalDeadlineAt')} />
+            <TextArea
+              label="Timeline notes"
+              rows={2}
+              value={form.timelineNotes}
+              onChange={set('timelineNotes')}
+              placeholder="Launch is on the 15th; reels needed a week before."
+            />
+          </FormGrid>
           {budgetInvalid && <Alert tone="error">The maximum budget must be at least the minimum.</Alert>}
         </Card>
 

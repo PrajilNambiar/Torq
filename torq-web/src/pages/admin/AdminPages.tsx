@@ -146,39 +146,41 @@ export function AdminProviders() {
           <EmptyState>No providers waiting for verification.</EmptyState>
         ) : (
           <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Provider</th>
-                  <th>Type</th>
-                  <th>Categories</th>
-                  <th>Location</th>
-                  <th>Status</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((p) => (
-                  <tr key={p.id}>
-                    <td>
-                      <strong>{p.headline ?? `Provider ${shortId(p.id)}`}</strong>
-                      {p.bio && <div className="muted small clamp">{p.bio}</div>}
-                    </td>
-                    <td>{labels.providerType[p.providerType]}</td>
-                    <td>{p.serviceCategories.split(',').join(', ') || '—'}</td>
-                    <td>{[p.city, p.region].filter(Boolean).join(', ') || '—'}</td>
-                    <td>
-                      <StatusBadge kind="provider" status={p.status} />
-                    </td>
-                    <td>
-                      <button className="btn primary small" disabled={verify.isPending} onClick={() => verify.mutate(p.id)}>
-                        Verify
-                      </button>
-                    </td>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Provider</th>
+                    <th>Type</th>
+                    <th>Categories</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.items.map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <strong>{p.headline ?? `Provider ${shortId(p.id)}`}</strong>
+                        {p.bio && <div className="muted small clamp">{p.bio}</div>}
+                      </td>
+                      <td>{labels.providerType[p.providerType]}</td>
+                      <td>{p.serviceCategories.split(',').join(', ') || '—'}</td>
+                      <td>{[p.city, p.region].filter(Boolean).join(', ') || '—'}</td>
+                      <td>
+                        <StatusBadge kind="provider" status={p.status} />
+                      </td>
+                      <td>
+                        <button className="btn primary small" disabled={verify.isPending} onClick={() => verify.mutate(p.id)}>
+                          Verify
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <Pager page={data.page} pageSize={data.pageSize} total={data.total} onPage={setPage} />
           </>
         )}
@@ -246,32 +248,34 @@ export function AdminCampaigns() {
           <EmptyState>No campaigns yet.</EmptyState>
         ) : (
           <>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Campaign</th>
-                  <th>Requirement</th>
-                  <th>Agreed price</th>
-                  <th>Platform fee</th>
-                  <th>Created</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((c) => (
-                  <tr key={c.id}>
-                    <td>{shortId(c.id)}</td>
-                    <td>{shortId(c.requirementId)}</td>
-                    <td>{money(c.agreedPrice, c.currency)}</td>
-                    <td>{money(c.platformFeeAmount, c.currency)}</td>
-                    <td>{date(c.createdAt)}</td>
-                    <td>
-                      <StatusBadge kind="campaign" status={c.status} />
-                    </td>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Campaign</th>
+                    <th>Requirement</th>
+                    <th>Agreed price</th>
+                    <th>Platform fee</th>
+                    <th>Created</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.items.map((c) => (
+                    <tr key={c.id}>
+                      <td>{shortId(c.id)}</td>
+                      <td>{shortId(c.requirementId)}</td>
+                      <td>{money(c.agreedPrice, c.currency)}</td>
+                      <td>{money(c.platformFeeAmount, c.currency)}</td>
+                      <td>{date(c.createdAt)}</td>
+                      <td>
+                        <StatusBadge kind="campaign" status={c.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <Pager page={data.page} pageSize={data.pageSize} total={data.total} onPage={setPage} />
           </>
         )}
