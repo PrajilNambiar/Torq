@@ -35,6 +35,8 @@ public interface IMarketplaceService
     Task RequestChangesAsync(Guid userId, Guid milestoneId, string notes, CancellationToken ct);
     Task ApproveMilestoneAsync(Guid userId, Guid milestoneId, CancellationToken ct);
     Task FundCampaignAsync(Guid userId, Guid campaignId, CancellationToken ct);
+    Task RefundCampaignAsync(Guid userId, Guid campaignId, CancellationToken ct);
+    Task CancelFundingAsync(Guid userId, Guid campaignId, CancellationToken ct);
     Task PayoutMilestoneAsync(Guid userId, Guid milestoneId, CancellationToken ct);
     Task<MessageDto> PostMessageAsync(Guid userId, Guid campaignId, CreateMessageRequest request, CancellationToken ct);
     Task<PagedResult<MessageDto>> ListMessagesAsync(Guid userId, UserRole role, Guid campaignId, int page, int pageSize, CancellationToken ct);

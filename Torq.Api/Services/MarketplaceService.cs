@@ -7,6 +7,8 @@ using Torq.Api.Data.Repositories.Interfaces;
 using Torq.Api.Domain;
 using Torq.Api.Domain.Entities;
 using Torq.Api.Domain.Enums;
+using Torq.Api.Services.Payments;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Torq.Api.Services;
@@ -22,7 +24,8 @@ public sealed class MarketplaceService(
     IAuditRepository audit,
     IMapper mapper,
     IOptions<MarketplaceOptions> options,
-    IFileStorage files) : IMarketplaceService
+    IFileStorage files,
+    IPaymentProvider payments) : IMarketplaceService
 {
     public async Task<BusinessDto> GetBusinessAsync(Guid userId, CancellationToken ct)
     {
@@ -542,27 +545,128 @@ public sealed class MarketplaceService(
             throw new AppException("Campaign is not awaiting funding.");
         }
 
+        if (await campaigns.HasInFlightPaymentAsync(campaign.Id, ct))
+        {
+            throw new AppException("A payment for this campaign is already in progress.", HttpStatusCode.Conflict);
+        }
+
+        if (campaign.Milestones.Sum(x => x.Amount) != campaign.AgreedPrice)
+        {
+            throw new AppException("Milestone amounts must equal the agreed price.");
+        }
+
+        var result = payments.Charge(campaign.AgreedPrice, campaign.Currency, campaign.Id.ToString());
+        var status = ToPaymentStatus(result.Outcome);
         campaigns.AddPayment(new Payment
         {
             Id = Guid.NewGuid(),
             CampaignId = campaign.Id,
             Amount = campaign.AgreedPrice,
             Currency = campaign.Currency,
-            Status = PaymentStatus.Succeeded,
-            ExternalProvider = "stub",
-            ExternalPaymentId = $"stub-{Guid.NewGuid():N}",
-            PaidAt = DateTime.UtcNow
+            Status = status,
+            ExternalProvider = result.Provider,
+            ExternalPaymentId = result.ExternalId,
+            PaidAt = status == PaymentStatus.Succeeded ? DateTime.UtcNow : null
         });
 
-        campaign.Status = CampaignStatus.Active;
-        campaign.StartedAt = DateTime.UtcNow;
-        foreach (var milestone in campaign.Milestones)
+        if (status == PaymentStatus.Succeeded)
         {
-            milestone.Status = MilestoneStatus.Funded;
+            campaign.Status = CampaignStatus.Active;
+            campaign.StartedAt = DateTime.UtcNow;
+            foreach (var milestone in campaign.Milestones)
+            {
+                milestone.Status = MilestoneStatus.Funded;
+            }
         }
 
+        try
+        {
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            throw new AppException("A payment for this campaign is already in progress.", HttpStatusCode.Conflict);
+        }
+
+        var action = status switch
+        {
+            PaymentStatus.Succeeded => "Funded",
+            PaymentStatus.Failed => "FundingFailed",
+            _ => "FundingPending"
+        };
+        await audit.WriteAsync(userId, "Campaign", campaign.Id, action, cancellationToken: ct);
+        if (status == PaymentStatus.Failed)
+        {
+            throw new AppException("Payment was declined.", HttpStatusCode.PaymentRequired);
+        }
+    }
+
+    public async Task RefundCampaignAsync(Guid userId, Guid campaignId, CancellationToken ct)
+    {
+        var business = await businesses.RequireByOwnerUserIdAsync(userId, tracking: false, ct);
+        var campaign = await campaigns.GetWithMilestonesForBusinessAsync(campaignId, business.Id, ct)
+                       ?? throw new AppException("Campaign not found.", HttpStatusCode.NotFound);
+        var payment = await campaigns.FindLatestPaymentAsync(campaign.Id, PaymentStatus.Succeeded, ct)
+                      ?? throw new AppException("There is no captured payment to refund.", HttpStatusCode.Conflict);
+        if (await campaigns.HasCommittedPayoutAsync(campaign.Id, ct))
+        {
+            throw new AppException("Payouts have already started, so this payment cannot be refunded.", HttpStatusCode.Conflict);
+        }
+
+        if (string.IsNullOrWhiteSpace(payment.ExternalPaymentId))
+        {
+            throw new AppException("Payment has no provider reference.", HttpStatusCode.Conflict);
+        }
+
+        var result = payments.Refund(payment.ExternalPaymentId, payment.Amount, payment.Currency);
+        if (result.Outcome == ProviderOutcome.Failed)
+        {
+            await audit.WriteAsync(userId, "Campaign", campaign.Id, "RefundFailed", cancellationToken: ct);
+            throw new AppException("Refund was declined.", HttpStatusCode.PaymentRequired);
+        }
+
+        if (result.Outcome != ProviderOutcome.Succeeded)
+        {
+            return;
+        }
+
+        payment.Status = PaymentStatus.Refunded;
+        campaign.Status = CampaignStatus.Cancelled;
         await unitOfWork.SaveChangesAsync(ct);
-        await audit.WriteAsync(userId, "Campaign", campaign.Id, "Funded", cancellationToken: ct);
+        await audit.WriteAsync(userId, "Campaign", campaign.Id, "Refunded", cancellationToken: ct);
+    }
+
+    public async Task CancelFundingAsync(Guid userId, Guid campaignId, CancellationToken ct)
+    {
+        var business = await businesses.RequireByOwnerUserIdAsync(userId, tracking: false, ct);
+        var campaign = await campaigns.GetWithMilestonesForBusinessAsync(campaignId, business.Id, ct)
+                       ?? throw new AppException("Campaign not found.", HttpStatusCode.NotFound);
+        if (campaign.Status != CampaignStatus.PendingFunding)
+        {
+            throw new AppException("Only a payment that is still processing can be cancelled.", HttpStatusCode.Conflict);
+        }
+
+        var payment = await campaigns.FindLatestPaymentAsync(campaign.Id, PaymentStatus.Processing, ct)
+                      ?? throw new AppException("There is no processing payment to cancel.", HttpStatusCode.Conflict);
+        if (string.IsNullOrWhiteSpace(payment.ExternalPaymentId))
+        {
+            throw new AppException("Payment has no provider reference.", HttpStatusCode.Conflict);
+        }
+
+        var result = payments.Cancel(payment.ExternalPaymentId);
+        if (result.Outcome == ProviderOutcome.Failed)
+        {
+            throw new AppException("Cancellation was declined.", HttpStatusCode.PaymentRequired);
+        }
+
+        if (result.Outcome != ProviderOutcome.Succeeded)
+        {
+            return;
+        }
+
+        payment.Status = PaymentStatus.Cancelled;
+        await unitOfWork.SaveChangesAsync(ct);
+        await audit.WriteAsync(userId, "Campaign", campaign.Id, "FundingCancelled", cancellationToken: ct);
     }
 
     public async Task PayoutMilestoneAsync(Guid userId, Guid milestoneId, CancellationToken ct)
@@ -573,7 +677,27 @@ public sealed class MarketplaceService(
             throw new AppException("Milestone must be approved before payout.");
         }
 
+        if (await campaigns.HasInFlightPayoutAsync(milestone.Id, ct))
+        {
+            throw new AppException("A payout for this milestone is already in progress.", HttpStatusCode.Conflict);
+        }
+
+        var captured = await campaigns.SumCapturedAsync(milestone.CampaignId, ct);
+        var committed = await campaigns.SumCommittedPayoutGrossAsync(milestone.CampaignId, ct);
+        if (milestone.Amount <= 0 || committed + milestone.Amount > captured)
+        {
+            throw new AppException("Payout would exceed the captured amount.");
+        }
+
         var fee = Math.Round(milestone.Amount * milestone.Campaign.PlatformFeePercent / 100m, 2);
+        var net = milestone.Amount - fee;
+        if (net + fee != milestone.Amount)
+        {
+            throw new AppException("Payout fee does not match the milestone amount.");
+        }
+        var result = payments.SendPayout(net, milestone.Campaign.Currency, milestone.Id.ToString());
+        var status = ToPayoutStatus(result.Outcome);
+        var now = DateTime.UtcNow;
         campaigns.AddPayout(new Payout
         {
             Id = Guid.NewGuid(),
@@ -582,29 +706,49 @@ public sealed class MarketplaceService(
             ProviderProfileId = milestone.Campaign.ProviderProfileId,
             GrossAmount = milestone.Amount,
             FeeAmount = fee,
-            NetAmount = milestone.Amount - fee,
+            NetAmount = net,
             Currency = milestone.Campaign.Currency,
-            Status = PayoutStatus.Paid,
-            ExternalPayoutId = $"stub-{Guid.NewGuid():N}",
-            PaidAt = DateTime.UtcNow
+            Status = status,
+            ExternalPayoutId = result.ExternalId,
+            PaidAt = status == PayoutStatus.Paid ? now : null
         });
-        milestone.Status = MilestoneStatus.Paid;
-        milestone.PaidAt = DateTime.UtcNow;
-
-        var remaining = await campaigns.CountUnpaidMilestonesAsync(milestone.CampaignId, milestone.Id, ct);
-        if (remaining == 0)
+        if (status == PayoutStatus.Paid)
         {
-            milestone.Campaign.Status = CampaignStatus.Completed;
-            milestone.Campaign.CompletedAt = DateTime.UtcNow;
-            milestone.Campaign.Requirement.Status = RequirementStatus.Closed;
-        }
-        else
-        {
-            milestone.Campaign.Status = CampaignStatus.Active;
+            milestone.Status = MilestoneStatus.Paid;
+            milestone.PaidAt = now;
+            var remaining = await campaigns.CountUnpaidMilestonesAsync(milestone.CampaignId, milestone.Id, ct);
+            if (remaining == 0)
+            {
+                milestone.Campaign.Status = CampaignStatus.Completed;
+                milestone.Campaign.CompletedAt = now;
+                milestone.Campaign.Requirement.Status = RequirementStatus.Closed;
+            }
+            else
+            {
+                milestone.Campaign.Status = CampaignStatus.Active;
+            }
         }
 
-        await unitOfWork.SaveChangesAsync(ct);
-        await audit.WriteAsync(userId, "Milestone", milestone.Id, "Paid", cancellationToken: ct);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            throw new AppException("A payout for this milestone is already in progress.", HttpStatusCode.Conflict);
+        }
+
+        var action = status switch
+        {
+            PayoutStatus.Paid => "Paid",
+            PayoutStatus.Failed => "PayoutFailed",
+            _ => "PayoutPending"
+        };
+        await audit.WriteAsync(userId, "Milestone", milestone.Id, action, cancellationToken: ct);
+        if (status == PayoutStatus.Failed)
+        {
+            throw new AppException("Payout was declined.", HttpStatusCode.PaymentRequired);
+        }
     }
 
     public async Task<MessageDto> PostMessageAsync(Guid userId, Guid campaignId, CreateMessageRequest request, CancellationToken ct)
@@ -810,6 +954,20 @@ public sealed class MarketplaceService(
             throw new AppException("Uploaded file was not found. Upload via /api/v1/files first.");
         }
     }
+
+    private static PaymentStatus ToPaymentStatus(ProviderOutcome outcome) => outcome switch
+    {
+        ProviderOutcome.Succeeded => PaymentStatus.Succeeded,
+        ProviderOutcome.Failed => PaymentStatus.Failed,
+        _ => PaymentStatus.Processing
+    };
+
+    private static PayoutStatus ToPayoutStatus(ProviderOutcome outcome) => outcome switch
+    {
+        ProviderOutcome.Succeeded => PayoutStatus.Paid,
+        ProviderOutcome.Failed => PayoutStatus.Failed,
+        _ => PayoutStatus.Processing
+    };
 
     private static void EnsureVerified(ProviderProfile provider)
     {

@@ -90,6 +90,8 @@ public sealed class MarketplaceFlowTests : IClassFixture<ApiFactory>
         var campaign = await (await _client.PostAsync($"/api/v1/requirements/{created.Id}/select/{proposal.Id}", null))
             .EnsureSuccess().Content.ReadFromJsonAsync<CampaignDto>();
         campaign!.Status.Should().Be(CampaignStatus.PendingFunding);
+        var missingKey = await _client.PostAsync($"/api/v1/campaigns/{campaign.Id}/fund", null);
+        missingKey.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         async Task<HttpResponseMessage> FundAsync()
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/campaigns/{campaign.Id}/fund");
@@ -112,7 +114,12 @@ public sealed class MarketplaceFlowTests : IClassFixture<ApiFactory>
 
         UseToken(business.AccessToken);
         (await _client.PostAsync($"/api/v1/milestones/{milestoneId}/approve", null)).EnsureSuccess();
-        (await _client.PostAsync($"/api/v1/milestones/{milestoneId}/payout", null)).EnsureSuccess();
+        var reusedKey = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/milestones/{milestoneId}/payout");
+        reusedKey.Headers.TryAddWithoutValidation("Idempotency-Key", "fund-1");
+        (await _client.SendAsync(reusedKey)).StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var payout = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/milestones/{milestoneId}/payout");
+        payout.Headers.TryAddWithoutValidation("Idempotency-Key", "payout-1");
+        (await _client.SendAsync(payout)).EnsureSuccess();
         (await _client.PostAsJsonAsync($"/api/v1/campaigns/{campaign.Id}/reviews", new CreateReviewRequest(5, "Great work"))).EnsureSuccess();
 
         var done = await _client.GetFromJsonAsync<CampaignDto>($"/api/v1/campaigns/{campaign.Id}");

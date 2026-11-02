@@ -18,6 +18,12 @@ public interface ICampaignRepository
     void AddDeliverable(MilestoneDeliverable deliverable);
     void AddPayment(Payment payment);
     void AddPayout(Payout payout);
+    Task<bool> HasInFlightPaymentAsync(Guid campaignId, CancellationToken ct);
+    Task<bool> HasInFlightPayoutAsync(Guid milestoneId, CancellationToken ct);
+    Task<Payment?> FindLatestPaymentAsync(Guid campaignId, PaymentStatus status, CancellationToken ct);
+    Task<decimal> SumCapturedAsync(Guid campaignId, CancellationToken ct);
+    Task<decimal> SumCommittedPayoutGrossAsync(Guid campaignId, CancellationToken ct);
+    Task<bool> HasCommittedPayoutAsync(Guid campaignId, CancellationToken ct);
     Task<MessageThread> GetThreadAsync(Guid campaignId, CancellationToken ct);
     void AddMessage(Message message);
     Task<PagedResult<Message>> ListMessagesAsync(Guid campaignId, int page, int pageSize, CancellationToken ct);

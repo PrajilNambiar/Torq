@@ -39,6 +39,7 @@ public sealed class MilestonesController(IMarketplaceService marketplace, ICurre
     [HttpPost("{id:guid}/payout")]
     [Authorize(Roles = nameof(UserRole.Business))]
     [Idempotent]
+    [RequireIdempotencyKey]
     public async Task<IActionResult> Payout(Guid id, CancellationToken ct)
     {
         await marketplace.PayoutMilestoneAsync(current.RequireUserId(), id, ct);

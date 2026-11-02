@@ -35,6 +35,7 @@ public class TorqDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Gui
     public DbSet<DisputeEvidence> DisputeEvidence => Set<DisputeEvidence>();
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
+    public DbSet<EmailOtpChallenge> EmailOtpChallenges => Set<EmailOtpChallenge>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -123,7 +124,11 @@ public class TorqDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Gui
         builder.Entity<Payment>(e =>
         {
             e.Property(x => x.Amount).HasPrecision(18, 2);
-            e.HasIndex(x => x.ExternalPaymentId);
+            e.HasIndex(x => x.ExternalPaymentId).IsUnique();
+            e.HasIndex(x => x.CampaignId)
+                .IsUnique()
+                .HasFilter("\"Status\" IN (2, 3)")
+                .HasDatabaseName("IX_Payments_OneOpenCharge");
         });
 
         builder.Entity<Payout>(e =>
@@ -131,6 +136,18 @@ public class TorqDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Gui
             e.Property(x => x.GrossAmount).HasPrecision(18, 2);
             e.Property(x => x.FeeAmount).HasPrecision(18, 2);
             e.Property(x => x.NetAmount).HasPrecision(18, 2);
+            e.HasIndex(x => x.ExternalPayoutId).IsUnique();
+            e.HasIndex(x => x.MilestoneId)
+                .IsUnique()
+                .HasFilter("\"Status\" IN (2, 3)")
+                .HasDatabaseName("IX_Payouts_OneOpenPayout");
+        });
+
+        builder.Entity<EmailOtpChallenge>(e =>
+        {
+            e.Property(x => x.Email).HasMaxLength(256);
+            e.Property(x => x.CodeHash).HasMaxLength(128);
+            e.HasIndex(x => x.Email);
         });
 
         builder.Entity<Review>(e =>

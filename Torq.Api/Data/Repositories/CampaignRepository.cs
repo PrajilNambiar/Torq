@@ -61,6 +61,34 @@ public sealed class CampaignRepository(TorqDbContext db) : ICampaignRepository
     public void AddPayment(Payment payment) => db.Payments.Add(payment);
     public void AddPayout(Payout payout) => db.Payouts.Add(payout);
 
+    public Task<bool> HasInFlightPaymentAsync(Guid campaignId, CancellationToken ct)
+        => db.Payments.AnyAsync(
+            x => x.CampaignId == campaignId && (x.Status == PaymentStatus.Processing || x.Status == PaymentStatus.Succeeded),
+            ct);
+
+    public Task<bool> HasInFlightPayoutAsync(Guid milestoneId, CancellationToken ct)
+        => db.Payouts.AnyAsync(
+            x => x.MilestoneId == milestoneId && (x.Status == PayoutStatus.Processing || x.Status == PayoutStatus.Paid),
+            ct);
+
+    public Task<Payment?> FindLatestPaymentAsync(Guid campaignId, PaymentStatus status, CancellationToken ct)
+        => db.Payments.Where(x => x.CampaignId == campaignId && x.Status == status)
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+    public async Task<decimal> SumCapturedAsync(Guid campaignId, CancellationToken ct)
+        => await db.Payments.Where(x => x.CampaignId == campaignId && x.Status == PaymentStatus.Succeeded)
+            .SumAsync(x => x.Amount, ct);
+
+    public async Task<decimal> SumCommittedPayoutGrossAsync(Guid campaignId, CancellationToken ct)
+        => await db.Payouts.Where(x => x.CampaignId == campaignId && (x.Status == PayoutStatus.Processing || x.Status == PayoutStatus.Paid))
+            .SumAsync(x => x.GrossAmount, ct);
+
+    public Task<bool> HasCommittedPayoutAsync(Guid campaignId, CancellationToken ct)
+        => db.Payouts.AnyAsync(
+            x => x.CampaignId == campaignId && (x.Status == PayoutStatus.Processing || x.Status == PayoutStatus.Paid),
+            ct);
+
     public Task<MessageThread> GetThreadAsync(Guid campaignId, CancellationToken ct)
         => db.MessageThreads.FirstAsync(x => x.CampaignId == campaignId, ct);
 

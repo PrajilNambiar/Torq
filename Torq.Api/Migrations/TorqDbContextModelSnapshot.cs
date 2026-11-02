@@ -345,6 +345,41 @@ namespace Torq.Api.Migrations
                     b.ToTable("DisputeEvidence");
                 });
 
+            modelBuilder.Entity("Torq.Api.Domain.Entities.EmailOtpChallenge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email");
+
+                    b.ToTable("EmailOtpChallenges");
+                });
+
             modelBuilder.Entity("Torq.Api.Domain.Entities.IdempotencyRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -588,9 +623,13 @@ namespace Torq.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CampaignId");
+                    b.HasIndex("CampaignId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Payments_OneOpenCharge")
+                        .HasFilter("\"Status\" IN (2, 3)");
 
-                    b.HasIndex("ExternalPaymentId");
+                    b.HasIndex("ExternalPaymentId")
+                        .IsUnique();
 
                     b.ToTable("Payments");
                 });
@@ -641,6 +680,14 @@ namespace Torq.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CampaignId");
+
+                    b.HasIndex("ExternalPayoutId")
+                        .IsUnique();
+
+                    b.HasIndex("MilestoneId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Payouts_OneOpenPayout")
+                        .HasFilter("\"Status\" IN (2, 3)");
 
                     b.ToTable("Payouts");
                 });

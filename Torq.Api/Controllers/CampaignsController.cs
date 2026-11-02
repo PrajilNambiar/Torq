@@ -28,9 +28,30 @@ public sealed class CampaignsController(IMarketplaceService marketplace, ICurren
     [HttpPost("{id:guid}/fund")]
     [Authorize(Roles = nameof(UserRole.Business))]
     [Idempotent]
+    [RequireIdempotencyKey]
     public async Task<IActionResult> Fund(Guid id, CancellationToken ct)
     {
         await marketplace.FundCampaignAsync(current.RequireUserId(), id, ct);
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/refund")]
+    [Authorize(Roles = nameof(UserRole.Business))]
+    [Idempotent]
+    [RequireIdempotencyKey]
+    public async Task<IActionResult> Refund(Guid id, CancellationToken ct)
+    {
+        await marketplace.RefundCampaignAsync(current.RequireUserId(), id, ct);
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/cancel-funding")]
+    [Authorize(Roles = nameof(UserRole.Business))]
+    [Idempotent]
+    [RequireIdempotencyKey]
+    public async Task<IActionResult> CancelFunding(Guid id, CancellationToken ct)
+    {
+        await marketplace.CancelFundingAsync(current.RequireUserId(), id, ct);
         return NoContent();
     }
 
