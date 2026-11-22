@@ -18,8 +18,7 @@ public sealed class AuthService(
     IUnitOfWork unitOfWork,
     IAuditRepository audit,
     IJwtTokenService jwt,
-    IEmailOtpService otp,
-    IHostEnvironment environment) : IAuthService
+    IEmailOtpService otp) : IAuthService
 {
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
@@ -116,16 +115,6 @@ public sealed class AuthService(
         if (!user.EmailConfirmed)
         {
             throw new AppException("Email is not verified.", HttpStatusCode.Forbidden);
-        }
-
-        if (user.Role == UserRole.Admin && !environment.IsEnvironment("Testing"))
-        {
-            if (string.IsNullOrWhiteSpace(request.Code))
-            {
-                throw new AppException("Admin sign-in requires a verification code.", HttpStatusCode.Forbidden);
-            }
-
-            await otp.VerifyAsync(user.Email ?? request.Email, request.Code, ct);
         }
 
         user.LastLoginAt = DateTime.UtcNow;
