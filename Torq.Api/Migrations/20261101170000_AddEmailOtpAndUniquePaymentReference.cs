@@ -1,11 +1,14 @@
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Torq.Api.Data;
 
 #nullable disable
 
 namespace Torq.Api.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(TorqDbContext))]
     [Migration("20261101170000_AddEmailOtpAndUniquePaymentReference")]
     public partial class AddEmailOtpAndUniquePaymentReference : Migration
     {

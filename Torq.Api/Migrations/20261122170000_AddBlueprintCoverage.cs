@@ -1,11 +1,14 @@
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Torq.Api.Data;
 
 #nullable disable
 
 namespace Torq.Api.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(TorqDbContext))]
     [Migration("20261122170000_AddBlueprintCoverage")]
     public partial class AddBlueprintCoverage : Migration
     {
