@@ -50,6 +50,7 @@ export interface AuthResponse {
 export interface RegisterResponse {
   email: string
   emailVerificationRequired: boolean
+  accessToken?: string | null
 }
 
 export interface SendOtpRequest {

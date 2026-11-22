@@ -89,7 +89,7 @@ public sealed class AuthService(
             // A code was already sent for this address. The account stays unusable until it is verified.
         }
 
-        return new RegisterResponse(email, EmailVerificationRequired: true);
+        return new RegisterResponse(email, EmailVerificationRequired: true, jwt.CreateToken(user));
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct)
