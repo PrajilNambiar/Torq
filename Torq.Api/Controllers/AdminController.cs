@@ -63,6 +63,29 @@ public sealed class AdminController(IAdminService admin, ICurrentUser current) :
     public async Task<ActionResult<PagedResult<CampaignDto>>> Campaigns([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
         => Ok(await admin.ListCampaignsAsync(page, pageSize, ct));
 
+    [HttpGet("audit")]
+    public async Task<ActionResult<PagedResult<AuditEventDto>>> Audit([FromServices] ICoverageService coverage, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+        => Ok(await coverage.AuditAsync(page, pageSize, ct));
+
+    [HttpGet("payments/exceptions")]
+    public async Task<ActionResult<IReadOnlyList<PaymentExceptionDto>>> PaymentExceptions([FromServices] ICoverageService coverage, CancellationToken ct)
+        => Ok(await coverage.PaymentExceptionsAsync(ct));
+
+    [HttpGet("settings")]
+    public async Task<ActionResult<PlatformSettingsDto>> Settings([FromServices] ICoverageService coverage, CancellationToken ct)
+        => Ok(await coverage.GetSettingsAsync(ct));
+
+    [HttpPut("settings")]
+    public async Task<ActionResult<PlatformSettingsDto>> UpdateSettings([FromBody] UpdatePlatformSettingsRequest request, [FromServices] ICoverageService coverage, CancellationToken ct)
+        => Ok(await coverage.UpdateSettingsAsync(request, ct));
+
+    [HttpPost("users/{id:guid}/fraud")]
+    public async Task<IActionResult> Fraud(Guid id, [FromBody] FraudFlagRequest request, [FromServices] ICoverageService coverage, CancellationToken ct)
+    {
+        await coverage.FlagUserAsync(id, request.Flagged, ct);
+        return NoContent();
+    }
+
     [HttpPost("disputes/{id:guid}/evidence")]
     public async Task<ActionResult<FileAssetDto>> Evidence(Guid id, [FromBody] AttachFileRequest request, [FromServices] IMarketplaceService marketplace, CancellationToken ct)
         => Ok(await marketplace.AttachDisputeEvidenceAsync(current.RequireUserId(), id, request, ct));

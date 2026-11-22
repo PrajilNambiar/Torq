@@ -9,4 +9,5 @@ public sealed record UpdateBusinessRequest(
     string? HeadquartersCity,
     string? HeadquartersRegion,
     string? Gstin,
-    string? BillingEmail);
+    string? BillingEmail,
+    string? Products = null);

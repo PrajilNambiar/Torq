@@ -13,6 +13,7 @@ public class ApplicationUser : IdentityUser<Guid>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
+    public bool FraudFlagged { get; set; }
 
     public Business? Business { get; set; }
     public ProviderProfile? ProviderProfile { get; set; }

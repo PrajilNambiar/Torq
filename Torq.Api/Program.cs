@@ -63,6 +63,7 @@ public partial class Program
         builder.Services.AddScoped<IPaymentWebhookService, PaymentWebhookService>();
         builder.Services.AddSingleton<IEmailSender, LoggingEmailSender>();
         builder.Services.AddScoped<IEmailOtpService, EmailOtpService>();
+        builder.Services.AddScoped<ICoverageService, CoverageService>();
         builder.Services.AddScoped<IdempotencyActionFilter>();
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();

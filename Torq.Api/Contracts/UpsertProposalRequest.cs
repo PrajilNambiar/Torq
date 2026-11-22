@@ -17,4 +17,5 @@ public sealed record UpsertProposalRequest(
     string? CoverNote,
     bool Submit,
     IReadOnlyList<ProposalMilestoneDto>? Milestones = null,
-    IReadOnlyList<Guid>? PortfolioItemIds = null);
+    IReadOnlyList<Guid>? PortfolioItemIds = null,
+    DateTime? ValidUntil = null);

@@ -27,6 +27,7 @@ const empty = {
   clientRequirements: '',
   optionalAddOns: '',
   coverNote: '',
+  validUntil: '',
 }
 
 type TextKey = Exclude<keyof typeof empty, 'pricingModel'>
@@ -69,6 +70,7 @@ export function ProposalBuilder() {
         clientRequirements: blank(form.clientRequirements),
         optionalAddOns: blank(form.optionalAddOns),
         coverNote: blank(form.coverNote),
+        validUntil: form.validUntil ? new Date(form.validUntil).toISOString() : null,
         submit,
         milestones: ms.length ? ms : null,
         portfolioItemIds: portfolioIds,
@@ -161,6 +163,9 @@ export function ProposalBuilder() {
               </Field>
               <Field label="Total price (₹)">
                 <input type="number" min={1} required value={form.priceAmount} onChange={set('priceAmount')} />
+              </Field>
+              <Field label="Valid until" hint="Optional. The business cannot select this proposal after this time.">
+                <input type="datetime-local" value={form.validUntil} onChange={set('validUntil')} />
               </Field>
               <Field label="Timeline (days)">
                 <input type="number" min={1} required value={form.timelineDays} onChange={set('timelineDays')} />

@@ -27,10 +27,12 @@ public class Requirement
     public DateTime? PublishedAt { get; set; }
     public Guid? ModeratedByUserId { get; set; }
     public string? ModerationNotes { get; set; }
+    public int ViewCount { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<RequirementAsset> Assets { get; set; } = new List<RequirementAsset>();
+    public ICollection<RequirementQuestion> Questions { get; set; } = new List<RequirementQuestion>();
     public ICollection<Proposal> Proposals { get; set; } = new List<Proposal>();
     public Campaign? Campaign { get; set; }
 }

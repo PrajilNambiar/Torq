@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { adminApi } from '../api'
 import { BrandMark } from '../components/BrandMark'
 import {
   IconBriefcase,
@@ -37,6 +38,7 @@ const nav: Record<UserRole, NavItem[]> = {
     { to: '/provider/services', label: 'Services', icon: <IconLayers /> },
     { to: '/provider/portfolio', label: 'Portfolio', icon: <IconImage /> },
     { to: '/provider/social', label: 'Social accounts', icon: <IconShare /> },
+    { to: '/provider/earnings', label: 'Earnings', icon: <IconBriefcase /> },
   ],
   [UserRole.Admin]: [
     { to: '/admin', label: 'Overview', end: true, icon: <IconHome /> },
@@ -44,6 +46,7 @@ const nav: Record<UserRole, NavItem[]> = {
     { to: '/admin/providers', label: 'Provider verification', icon: <IconUsers /> },
     { to: '/admin/disputes', label: 'Disputes', icon: <IconFlag /> },
     { to: '/admin/campaigns', label: 'Campaigns', icon: <IconBriefcase /> },
+    { to: '/admin/trust', label: 'Trust and payments', icon: <IconFlag /> },
   ],
 }
 
@@ -128,6 +131,23 @@ export function AppLayout() {
           >
             Log out
           </button>
+          {user.role !== UserRole.Admin && (
+            <button
+              className="btn ghost small"
+              onClick={async () => {
+                if (!window.confirm('Delete this account? You will be signed out.')) return
+                try {
+                  await adminApi.deleteAccount()
+                  logout()
+                  navigate('/login')
+                } catch {
+                  window.alert('This account could not be deleted.')
+                }
+              }}
+            >
+              Delete account
+            </button>
+          )}
         </div>
       </aside>
 

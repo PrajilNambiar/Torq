@@ -42,6 +42,9 @@ export function CampaignWorkspace() {
   const [reviewed, setReviewed] = useState(false)
 
   const fund = useCampaignAction(id, () => campaignsApi.fund(id), 'Campaign funded. The provider can start work.')
+  const refund = useCampaignAction(id, () => campaignsApi.refund(id), 'Payment refunded and the campaign was cancelled.')
+  const cancelFunding = useCampaignAction(id, () => campaignsApi.cancelFunding(id), 'The processing payment was cancelled.')
+  const ledger = useQuery({ queryKey: ['ledger', id], queryFn: () => campaignsApi.ledger(id) })
   const approve = useCampaignAction(id, (mid: string) => milestonesApi.approve(mid), 'Milestone approved. Release the payout when ready.')
   const payout = useCampaignAction(id, (mid: string) => milestonesApi.payout(mid), 'Payout released.')
   const requestChanges = useCampaignAction(
@@ -99,8 +102,18 @@ export function CampaignWorkspace() {
         actions={
           <>
             {isBusiness && c.status === CampaignStatus.PendingFunding && (
-              <button className="btn primary" disabled={fund.isPending} onClick={() => fund.mutate(undefined)}>
-                {fund.isPending ? 'Funding…' : `Fund ${money(c.agreedPrice, c.currency)}`}
+              <>
+                <button className="btn primary" disabled={fund.isPending} onClick={() => fund.mutate(undefined)}>
+                  {fund.isPending ? 'Funding…' : `Fund ${money(c.agreedPrice, c.currency)}`}
+                </button>
+                <button className="btn ghost" disabled={cancelFunding.isPending} onClick={() => cancelFunding.mutate(undefined)}>
+                  Cancel processing payment
+                </button>
+              </>
+            )}
+            {isBusiness && c.status === CampaignStatus.Active && (
+              <button className="btn ghost" disabled={refund.isPending} onClick={() => refund.mutate(undefined)}>
+                Refund
               </button>
             )}
             {disputable.includes(c.status) && (
@@ -127,6 +140,23 @@ export function CampaignWorkspace() {
         <Stat label="Paid out" value={money(paid, c.currency)} />
         <Stat label="Started" value={date(c.createdAt)} />
       </div>
+      <Card title="Receipts">
+        {(ledger.data ?? []).length === 0 ? (
+          <p className="muted">No payment or payout records yet.</p>
+        ) : (
+          <ul className="list">
+            {ledger.data!.map((entry) => (
+              <li key={entry.id}>
+                <span>
+                  {entry.kind} · {entry.status}
+                  {entry.externalId ? ` · ${entry.externalId}` : ''}
+                </span>
+                <span>{money(entry.amount, entry.currency)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       <div className="workspace">
         <Card title="Milestones">

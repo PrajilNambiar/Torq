@@ -9,11 +9,13 @@ import { VerificationBanner } from './VerificationBanner'
 
 export function Opportunities() {
   const [page, setPage] = useState(1)
+  const [location, setLocation] = useState('')
+  const [language, setLanguage] = useState('')
   const provider = useQuery({ queryKey: ['provider'], queryFn: providersApi.get })
   const verified = provider.data?.status === ProviderStatus.Verified
   const opps = useQuery({
-    queryKey: ['opportunities', 'list', page],
-    queryFn: () => opportunitiesApi.list(page, 20),
+    queryKey: ['opportunities', 'list', page, location, language],
+    queryFn: () => opportunitiesApi.list(page, 20, { location: location || undefined, language: language || undefined }),
     enabled: verified,
   })
 
@@ -28,6 +30,10 @@ export function Opportunities() {
       <VerificationBanner provider={provider.data} />
       {verified && (
         <>
+          <div className="toolbar">
+            <input aria-label="Location" placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} />
+            <input aria-label="Language" placeholder="Language" value={language} onChange={(e) => setLanguage(e.target.value)} />
+          </div>
           <ErrorBox error={opps.error} />
           {opps.isLoading ? (
             <Spinner />

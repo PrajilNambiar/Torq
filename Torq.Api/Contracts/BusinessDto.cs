@@ -12,4 +12,5 @@ public sealed record BusinessDto(
     string? HeadquartersCity,
     string? HeadquartersRegion,
     string CountryCode,
-    BusinessStatus Status);
+    BusinessStatus Status,
+    string? Products);

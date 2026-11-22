@@ -7,7 +7,16 @@ import { SocialPlatform, labels, optionsOf } from '../../types/enums'
 import { blank, num } from '../../lib/format'
 import type { SocialAccountDto } from '../../types/api'
 
-const empty = { platform: SocialPlatform.Instagram as SocialPlatform, handle: '', profileUrl: '', followerCount: '' }
+const empty = {
+  platform: SocialPlatform.Instagram as SocialPlatform,
+  handle: '',
+  profileUrl: '',
+  followerCount: '',
+  audienceGeography: '',
+  engagementRate: '',
+  usageRights: '',
+  disclosureAcknowledged: false,
+}
 
 export function ProviderSocial() {
   const toast = useToast()
@@ -22,6 +31,10 @@ export function ProviderSocial() {
         handle: form.handle.trim(),
         profileUrl: blank(form.profileUrl),
         followerCount: num(form.followerCount),
+        audienceGeography: blank(form.audienceGeography),
+        engagementRate: num(form.engagementRate),
+        usageRights: blank(form.usageRights),
+        disclosureAcknowledged: form.disclosureAcknowledged,
       }),
     onSuccess: () => {
       setForm(empty)
@@ -115,6 +128,33 @@ export function ProviderSocial() {
               value={form.followerCount}
               onChange={(followerCount) => setForm({ ...form, followerCount })}
             />
+            <TextBox
+              label="Audience geography"
+              value={form.audienceGeography}
+              onChange={(audienceGeography) => setForm({ ...form, audienceGeography })}
+              placeholder="Kerala, India"
+            />
+            <TextBox
+              label="Engagement rate %"
+              type="number"
+              min={0}
+              value={form.engagementRate}
+              onChange={(engagementRate) => setForm({ ...form, engagementRate })}
+            />
+            <TextBox
+              label="Usage rights"
+              value={form.usageRights}
+              onChange={(usageRights) => setForm({ ...form, usageRights })}
+              placeholder="Organic posts, 30 days"
+            />
+            <label className="inline">
+              <input
+                type="checkbox"
+                checked={form.disclosureAcknowledged}
+                onChange={(e) => setForm({ ...form, disclosureAcknowledged: e.target.checked })}
+              />
+              Disclosure checklist acknowledged
+            </label>
             <button className="btn primary" disabled={add.isPending}>
               Link account
             </button>

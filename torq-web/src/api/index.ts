@@ -12,6 +12,9 @@ import type {
   CreateReviewRequest,
   CreateSocialRequest,
   DisputeDto,
+  AuditEventDto,
+  PlatformSettingsDto,
+  PaymentExceptionDto,
   FileAssetDto,
   LoginRequest,
   MeResponse,
@@ -22,23 +25,32 @@ import type {
   PortfolioItemDto,
   ProposalDto,
   ProviderDto,
+  ProviderCardDto,
+  EarningDto,
   ProviderServiceDto,
   RegisterRequest,
+  RegisterResponse,
   RequirementDto,
+  RequirementQuestionDto,
+  LedgerEntryDto,
+  SendOtpRequest,
   SocialAccountDto,
   UpdateBusinessRequest,
   UpdateProviderRequest,
   UpsertProposalRequest,
   UpsertServiceRequest,
+  VerifyOtpRequest,
 } from '../types/api'
 
 const data = <T>(p: Promise<{ data: T }>) => p.then((r) => r.data)
 const paging = (page = 1, pageSize = 20) => ({ params: { page, pageSize } })
 
 export const authApi = {
-  register: (body: RegisterRequest) => data(api.post<AuthResponse>('/auth/register', body)),
+  register: (body: RegisterRequest) => data(api.post<RegisterResponse>('/auth/register', body)),
   login: (body: LoginRequest) => data(api.post<AuthResponse>('/auth/login', body)),
   me: () => data(api.get<MeResponse>('/auth/me')),
+  sendOtp: (body: SendOtpRequest) => api.post('/auth/otp/send', body),
+  verifyOtp: (body: VerifyOtpRequest) => api.post('/auth/otp/verify', body),
 }
 
 export const businessApi = {
@@ -55,12 +67,20 @@ export const providersApi = {
   addPortfolio: (body: CreatePortfolioRequest) => data(api.post<PortfolioItemDto>('/providers/me/portfolio', body)),
   social: () => data(api.get<SocialAccountDto[]>('/providers/me/social')),
   addSocial: (body: CreateSocialRequest) => data(api.post<SocialAccountDto>('/providers/me/social', body)),
+  reputation: () => data(api.get<ProviderCardDto>('/providers/me/reputation')),
+  earnings: () => data(api.get<EarningDto[]>('/providers/me/earnings')),
+  payoutAccount: (label: string) => api.put('/providers/me/payout-account', { label }),
+  card: (id: string) => data(api.get<ProviderCardDto>(`/providers/${id}/card`)),
 }
 
 export const requirementsApi = {
   list: (page?: number, pageSize?: number) =>
     data(api.get<PagedResult<RequirementDto>>('/requirements', paging(page, pageSize))),
   get: (id: string) => data(api.get<RequirementDto>(`/requirements/${id}`)),
+  questions: (id: string) => data(api.get<RequirementQuestionDto[]>(`/requirements/${id}/questions`)),
+  ask: (id: string, body: string) => data(api.post<RequirementQuestionDto>(`/requirements/${id}/questions`, { body })),
+  answer: (id: string, questionId: string, answer: string) =>
+    data(api.post<RequirementQuestionDto>(`/requirements/${id}/questions/${questionId}/answer`, { answer })),
   create: (body: CreateRequirementRequest) => data(api.post<RequirementDto>('/requirements', body)),
   update: (id: string, body: CreateRequirementRequest) => data(api.put<RequirementDto>(`/requirements/${id}`, body)),
   submit: (id: string) => api.post(`/requirements/${id}/submit`),
@@ -72,8 +92,8 @@ export const requirementsApi = {
 }
 
 export const opportunitiesApi = {
-  list: (page?: number, pageSize?: number) =>
-    data(api.get<PagedResult<OpportunityDto>>('/opportunities', paging(page, pageSize))),
+  list: (page?: number, pageSize?: number, filter?: { location?: string; language?: string; budgetMin?: number; budgetMax?: number; industry?: string }) =>
+    data(api.get<PagedResult<OpportunityDto>>('/opportunities', { params: { page: page ?? 1, pageSize: pageSize ?? 20, ...filter } })),
 }
 
 export const proposalsApi = {
@@ -87,6 +107,9 @@ export const campaignsApi = {
   get: (id: string) => data(api.get<CampaignDto>(`/campaigns/${id}`)),
   milestones: (id: string) => data(api.get<MilestoneDto[]>(`/campaigns/${id}/milestones`)),
   fund: (id: string) => api.post(`/campaigns/${id}/fund`, null, idempotent()),
+  refund: (id: string) => api.post(`/campaigns/${id}/refund`, null, idempotent()),
+  cancelFunding: (id: string) => api.post(`/campaigns/${id}/cancel-funding`, null, idempotent()),
+  ledger: (id: string) => data(api.get<LedgerEntryDto[]>(`/campaigns/${id}/ledger`)),
   messages: (id: string, page?: number, pageSize?: number) =>
     data(api.get<PagedResult<MessageDto>>(`/campaigns/${id}/messages`, paging(page, pageSize))),
   postMessage: (id: string, body: CreateMessageRequest) => data(api.post<MessageDto>(`/campaigns/${id}/messages`, body)),
@@ -129,4 +152,12 @@ export const adminApi = {
   disputes: (page?: number) => data(api.get<PagedResult<DisputeDto>>('/admin/disputes', paging(page))),
   resolveDispute: (id: string, notes?: string) => api.post(`/admin/disputes/${id}/resolve`, { notes }),
   campaigns: (page?: number) => data(api.get<PagedResult<CampaignDto>>('/admin/campaigns', paging(page))),
+  audit: (page?: number) => data(api.get<PagedResult<AuditEventDto>>('/admin/audit', paging(page))),
+  paymentExceptions: () => data(api.get<PaymentExceptionDto[]>('/admin/payments/exceptions')),
+  settings: () => data(api.get<PlatformSettingsDto>('/admin/settings')),
+  updateSettings: (platformFeePercent: number, allowedGeographies: string) =>
+    data(api.put<PlatformSettingsDto>('/admin/settings', { platformFeePercent, allowedGeographies })),
+  flagUser: (id: string, flagged: boolean) => api.post(`/admin/users/${id}/fraud`, { flagged }),
+  privacy: () => data(api.get('/auth/me/privacy')),
+  deleteAccount: () => api.post('/auth/me/delete'),
 }

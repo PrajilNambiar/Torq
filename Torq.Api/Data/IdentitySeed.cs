@@ -22,8 +22,20 @@ public static class IdentitySeed
             }
         }
 
-        if (string.IsNullOrWhiteSpace(password) || await users.FindByEmailAsync(email) is not null)
+        if (string.IsNullOrWhiteSpace(password))
         {
+            return;
+        }
+
+        var existing = await users.FindByEmailAsync(email);
+        if (existing is not null)
+        {
+            if (!existing.EmailConfirmed)
+            {
+                existing.EmailConfirmed = true;
+                await users.UpdateAsync(existing);
+            }
+
             return;
         }
 

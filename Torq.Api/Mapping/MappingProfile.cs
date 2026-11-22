@@ -17,7 +17,8 @@ public sealed class MappingProfile : Profile
             .ForMember(d => d.Status, o => o.Ignore())
             .ForMember(d => d.CreatedAt, o => o.Ignore())
             .ForMember(d => d.UpdatedAt, o => o.Ignore())
-            .ForMember(d => d.Requirements, o => o.Ignore());
+            .ForMember(d => d.Requirements, o => o.Ignore())
+            .ForMember(d => d.Products, o => o.MapFrom(s => s.Products));
 
         CreateMap<ProviderProfile, ProviderDto>();
         CreateMap<UpdateProviderRequest, ProviderProfile>()
@@ -58,7 +59,9 @@ public sealed class MappingProfile : Profile
             .ForMember(d => d.UpdatedAt, o => o.Ignore())
             .ForMember(d => d.Assets, o => o.Ignore())
             .ForMember(d => d.Proposals, o => o.Ignore())
-            .ForMember(d => d.Campaign, o => o.Ignore());
+            .ForMember(d => d.Campaign, o => o.Ignore())
+            .ForMember(d => d.Questions, o => o.Ignore())
+            .ForMember(d => d.ViewCount, o => o.Ignore());
 
         CreateMap<Proposal, ProposalDto>()
             .ForCtorParam(nameof(ProposalDto.ProviderHeadline), o => o.MapFrom(s => s.ProviderProfile != null ? s.ProviderProfile.Headline : null))

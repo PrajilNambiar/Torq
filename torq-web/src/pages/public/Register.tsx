@@ -1,37 +1,62 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
-import { homeFor } from '../../auth/homeFor'
+import { EmailCodeForm } from '../../components/EmailCodeForm'
 import { AuthShell } from '../../components/AuthShell'
 import { ErrorBox, TextBox } from '../../components/ui'
 import { IconLock, IconMail, IconUser } from '../../components/ui/icons'
 import { UserRole } from '../../types/enums'
 
 export function Register() {
-  const { user, register } = useAuth()
+  const { user, register, login } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [role, setRole] = useState<UserRole>(params.get('role') === 'provider' ? UserRole.Provider : UserRole.Business)
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [phone, setPhone] = useState('')
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
 
-  if (user) return <Navigate to={homeFor(user.role)} replace />
+  if (user) return <Navigate to={homeForRole(user.role)} replace />
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
     setError(null)
     try {
-      const me = await register({ email, password, displayName, role })
-      navigate(me.role === UserRole.Provider ? '/provider/profile' : '/business/profile', { replace: true })
+      const created = await register({ email: email.trim(), password, displayName, role, phone: phone.trim() || null })
+      setPendingEmail(created.email)
     } catch (err) {
       setError(err)
     } finally {
       setBusy(false)
     }
+  }
+
+  function homeForRole(nextRole: UserRole) {
+    return nextRole === UserRole.Provider ? '/provider/profile' : '/business/profile'
+  }
+
+  if (pendingEmail) {
+    return (
+      <AuthShell
+        mode="register"
+        title="Verify your email"
+        subtitle={`Enter the code we sent to ${pendingEmail}. Your account stays locked until this email is verified.`}
+      >
+        <EmailCodeForm
+          email={pendingEmail}
+          submitLabel="Verify and continue"
+          onVerified={async () => {
+            const me = await login({ email: pendingEmail, password })
+            navigate(homeForRole(me.role), { replace: true })
+          }}
+        />
+      </AuthShell>
+    )
   }
 
   return (
@@ -83,6 +108,14 @@ export function Register() {
           leadingIcon={<IconMail />}
           value={email}
           onChange={setEmail}
+        />
+        <TextBox
+          label="Phone number"
+          type="tel"
+          autoComplete="tel"
+          placeholder="Optional, 10 to 15 digits"
+          value={phone}
+          onChange={setPhone}
         />
         <TextBox
           label="Password"

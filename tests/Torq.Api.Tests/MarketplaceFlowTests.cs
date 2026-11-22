@@ -17,11 +17,43 @@ public sealed class MarketplaceFlowTests : IClassFixture<ApiFactory>
         _client = factory.CreateClient();
     }
 
-    [Fact]
-    public async Task Register_rejects_invalid_email()
+    [Theory]
+    [InlineData("not-an-email")]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("o'brien@test.com")]
+    public async Task Register_rejects_invalid_email(string email)
     {
-        var response = await _client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest("not-an-email", "Password123", "x", UserRole.Business));
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest(email, "Password123", "x", UserRole.Business));
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Login_is_rejected_until_email_is_verified()
+    {
+        const string email = "unverified@test.local";
+        var registered = await _client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest(email, "Password123", "Unverified", UserRole.Business));
+        registered.EnsureSuccess();
+        var json = await registered.Content.ReadAsStringAsync();
+        json.Should().NotContain("accessToken");
+        json.Should().Contain("emailVerificationRequired");
+
+        var wrongPassword = await _client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(email, "Password1234"));
+        wrongPassword.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+        var blocked = await _client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(email, "Password123"));
+        blocked.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await blocked.Content.ReadAsStringAsync()).Should().Contain("not verified");
+
+        var resend = await _client.PostAsJsonAsync("/api/v1/auth/otp/send", new SendOtpRequest(email));
+        resend.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+
+        var verify = await _client.PostAsJsonAsync("/api/v1/auth/otp/verify", new VerifyOtpRequest(email, "123456"));
+        verify.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var login = await _client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(email, "Password123"));
+        login.EnsureSuccess();
+        (await login.Content.ReadFromJsonAsync<AuthResponse>())!.AccessToken.Should().NotBeNullOrWhiteSpace();
     }
 
     [Fact]
@@ -130,7 +162,8 @@ public sealed class MarketplaceFlowTests : IClassFixture<ApiFactory>
     {
         var response = await _client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest(email, "Password123", email.Split('@')[0], role));
         response.EnsureSuccess();
-        return (await response.Content.ReadFromJsonAsync<AuthResponse>())!;
+        (await _client.PostAsJsonAsync("/api/v1/auth/otp/verify", new VerifyOtpRequest(email, "123456"))).EnsureSuccess();
+        return await Login(email, "Password123");
     }
 
     private async Task<AuthResponse> Login(string email, string password)

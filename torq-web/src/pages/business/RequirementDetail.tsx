@@ -25,8 +25,11 @@ export function RequirementDetail() {
   const toast = useToast()
   const qc = useQueryClient()
   const [pending, setPending] = useState<AttachFileRequest[]>([])
+  const [question, setQuestion] = useState('')
+  const [answers, setAnswers] = useState<Record<string, string>>({})
 
   const req = useQuery({ queryKey: ['requirement', id], queryFn: () => requirementsApi.get(id) })
+  const questions = useQuery({ queryKey: ['questions', id], queryFn: () => requirementsApi.questions(id) })
   const status = req.data?.status
   const hasProposals = status !== undefined && status >= RequirementStatus.Open && status !== RequirementStatus.Cancelled
   const proposals = useQuery({
@@ -83,7 +86,7 @@ export function RequirementDetail() {
         title={r.title}
         subtitle={
           <>
-            <StatusBadge kind="requirement" status={r.status} /> · {r.category} · posted {date(r.createdAt)}
+            <StatusBadge kind="requirement" status={r.status} /> · {r.category} · posted {date(r.createdAt)} · {r.viewCount} provider views
           </>
         }
         actions={
@@ -161,6 +164,51 @@ export function RequirementDetail() {
             </button>
           )}
         </div>
+      </Card>
+      <Card title="Questions on this brief">
+        {(questions.data ?? []).length === 0 && <p className="muted">No questions yet.</p>}
+        {(questions.data ?? []).map((q) => (
+          <div key={q.id} className="stack">
+            <p>{q.body}</p>
+            {q.answer ? (
+              <p className="muted">{q.answer}</p>
+            ) : (
+              <div className="row">
+                <input
+                  aria-label="Answer"
+                  value={answers[q.id] ?? ''}
+                  onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+                />
+                <button
+                  className="btn primary small"
+                  type="button"
+                  onClick={() =>
+                    requirementsApi.answer(id, q.id, answers[q.id] ?? '').then(() => {
+                      qc.invalidateQueries({ queryKey: ['questions', id] })
+                      toast.success('Answer posted.')
+                    }).catch(toast.error)
+                  }
+                >
+                  Answer
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+        <form
+          className="row"
+          onSubmit={(e) => {
+            e.preventDefault()
+            requirementsApi.ask(id, question).then(() => {
+              setQuestion('')
+              qc.invalidateQueries({ queryKey: ['questions', id] })
+              toast.success('Question posted.')
+            }).catch(toast.error)
+          }}
+        >
+          <input aria-label="Question" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask about this brief" />
+          <button className="btn ghost" type="submit">Ask</button>
+        </form>
       </Card>
     </>
   )

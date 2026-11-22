@@ -10,7 +10,7 @@ namespace Torq.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/v1/requirements")]
-public sealed class RequirementsController(IMarketplaceService marketplace, ICurrentUser current) : ControllerBase
+public sealed class RequirementsController(IMarketplaceService marketplace, ICoverageService coverage, ICurrentUser current) : ControllerBase
 {
     [HttpPost]
     [Authorize(Roles = nameof(UserRole.Business))]
@@ -37,7 +37,27 @@ public sealed class RequirementsController(IMarketplaceService marketplace, ICur
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<RequirementDto>> Get(Guid id, CancellationToken ct)
-        => Ok(await marketplace.GetRequirementAsync(current.RequireUserId(), current.Role ?? UserRole.Business, id, ct));
+    {
+        if (current.Role == UserRole.Provider)
+        {
+            await coverage.RecordViewAsync(id, ct);
+        }
+
+        return Ok(await marketplace.GetRequirementAsync(current.RequireUserId(), current.Role ?? UserRole.Business, id, ct));
+    }
+
+    [HttpGet("{id:guid}/questions")]
+    public async Task<ActionResult<IReadOnlyList<RequirementQuestionDto>>> Questions(Guid id, CancellationToken ct)
+        => Ok(await coverage.ListQuestionsAsync(current.RequireUserId(), current.Role ?? UserRole.Business, id, ct));
+
+    [HttpPost("{id:guid}/questions")]
+    public async Task<ActionResult<RequirementQuestionDto>> Ask(Guid id, [FromBody] AskQuestionRequest request, CancellationToken ct)
+        => Ok(await coverage.AskAsync(current.RequireUserId(), current.Role ?? UserRole.Business, id, request.Body, ct));
+
+    [HttpPost("{id:guid}/questions/{questionId:guid}/answer")]
+    [Authorize(Roles = nameof(UserRole.Business))]
+    public async Task<ActionResult<RequirementQuestionDto>> Answer(Guid id, Guid questionId, [FromBody] AnswerQuestionRequest request, CancellationToken ct)
+        => Ok(await coverage.AnswerAsync(current.RequireUserId(), id, questionId, request.Answer, ct));
 
     [HttpGet("{id:guid}/proposals")]
     [Authorize(Roles = nameof(UserRole.Business))]

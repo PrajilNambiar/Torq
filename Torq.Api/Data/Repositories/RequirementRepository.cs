@@ -1,4 +1,5 @@
 using Torq.Api.Common;
+using Torq.Api.Contracts;
 using Torq.Api.Data.Repositories.Interfaces;
 using Torq.Api.Domain;
 using Torq.Api.Domain.Entities;
@@ -38,12 +39,42 @@ public sealed class RequirementRepository(TorqDbContext db) : IRequirementReposi
         return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };
     }
 
-    public async Task<PagedResult<Requirement>> ListEligibleAsync(IReadOnlyCollection<string> serviceCategories, int page, int pageSize, CancellationToken ct)
+    public async Task<PagedResult<Requirement>> ListEligibleAsync(IReadOnlyCollection<string> serviceCategories, int page, int pageSize, OpportunityFilter? filter, CancellationToken ct)
     {
         (page, pageSize) = QueryPaging.Normalize(page, pageSize);
         var query = db.Requirements.AsNoTracking()
-            .Where(RequirementMatcher.EligibleFor(serviceCategories))
-            .OrderByDescending(x => x.CreatedAt);
+            .Where(RequirementMatcher.EligibleFor(serviceCategories));
+        if (!string.IsNullOrWhiteSpace(filter?.Location))
+        {
+            var location = filter.Location.Trim().ToLower();
+            query = query.Where(x => x.Location != null && x.Location.ToLower().Contains(location));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter?.Language))
+        {
+            var language = filter.Language.Trim().ToLower();
+            query = query.Where(x => x.Languages.ToLower().Contains(language));
+        }
+
+        if (filter?.BudgetMin is not null)
+        {
+            var min = filter.BudgetMin.Value;
+            query = query.Where(x => x.BudgetMax == null || x.BudgetMax >= min);
+        }
+
+        if (filter?.BudgetMax is not null)
+        {
+            var max = filter.BudgetMax.Value;
+            query = query.Where(x => x.BudgetMin == null || x.BudgetMin <= max);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter?.Industry))
+        {
+            var industry = filter.Industry.Trim().ToLower();
+            query = query.Where(x => x.Business.Industry != null && x.Business.Industry.ToLower().Contains(industry));
+        }
+
+        query = query.OrderByDescending(x => x.CreatedAt);
         var total = await query.CountAsync(ct);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
         return new PagedResult<Requirement> { Items = items, Page = page, PageSize = pageSize, Total = total };
