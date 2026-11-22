@@ -21,4 +21,5 @@ public sealed record RequirementDto(
     DateTime? ProposalDeadlineAt,
     RequirementStatus Status,
     DateTime CreatedAt,
-    IReadOnlyList<FileAssetDto> Assets);
+    IReadOnlyList<FileAssetDto> Assets,
+    int ViewCount = 0);

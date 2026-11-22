@@ -10,7 +10,7 @@ namespace Torq.Api.Controllers;
 [ApiController]
 [Authorize(Roles = nameof(UserRole.Provider))]
 [Route("api/v1/providers")]
-public sealed class ProvidersController(IMarketplaceService marketplace, ICurrentUser current) : ControllerBase
+public sealed class ProvidersController(IMarketplaceService marketplace, ICoverageService coverage, ICurrentUser current) : ControllerBase
 {
     [HttpGet("me")]
     public async Task<ActionResult<ProviderDto>> Get(CancellationToken ct)
@@ -43,4 +43,22 @@ public sealed class ProvidersController(IMarketplaceService marketplace, ICurren
     [HttpGet("me/social")]
     public async Task<ActionResult<IReadOnlyList<SocialAccountDto>>> Social(CancellationToken ct)
         => Ok(await marketplace.ListSocialAsync(current.RequireUserId(), ct));
+
+    [HttpGet("me/reputation")]
+    public async Task<ActionResult<ProviderCardDto>> Reputation(CancellationToken ct)
+    {
+        var me = await marketplace.GetProviderAsync(current.RequireUserId(), ct);
+        return Ok(await coverage.ProviderCardAsync(me.Id, ct));
+    }
+
+    [HttpGet("me/earnings")]
+    public async Task<ActionResult<IReadOnlyList<EarningDto>>> Earnings(CancellationToken ct)
+        => Ok(await coverage.EarningsAsync(current.RequireUserId(), ct));
+
+    [HttpPut("me/payout-account")]
+    public async Task<IActionResult> PayoutAccount([FromBody] PayoutAccountRequest request, CancellationToken ct)
+    {
+        await coverage.SetPayoutAccountAsync(current.RequireUserId(), request.Label, ct);
+        return NoContent();
+    }
 }

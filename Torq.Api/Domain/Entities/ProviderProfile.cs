@@ -19,6 +19,7 @@ public class ProviderProfile
     public decimal? MaxRate { get; set; }
     public string Currency { get; set; } = "INR";
     public string? Availability { get; set; } = "Available";
+    public string? PayoutAccountLabel { get; set; }
     public ProviderStatus Status { get; set; } = ProviderStatus.Unverified;
     public bool IdentityVerified { get; set; }
     public bool PortfolioVerified { get; set; }

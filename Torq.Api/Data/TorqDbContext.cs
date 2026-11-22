@@ -36,6 +36,8 @@ public class TorqDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Gui
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<EmailOtpChallenge> EmailOtpChallenges => Set<EmailOtpChallenge>();
+    public DbSet<RequirementQuestion> RequirementQuestions => Set<RequirementQuestion>();
+    public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -149,6 +151,24 @@ public class TorqDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Gui
             e.Property(x => x.CodeHash).HasMaxLength(128);
             e.HasIndex(x => x.Email);
         });
+
+        builder.Entity<RequirementQuestion>(e =>
+        {
+            e.Property(x => x.Body).HasMaxLength(2000);
+            e.Property(x => x.Answer).HasMaxLength(2000);
+            e.HasIndex(x => x.RequirementId);
+            e.HasOne(x => x.Requirement).WithMany(x => x.Questions).HasForeignKey(x => x.RequirementId);
+        });
+
+        builder.Entity<PlatformSetting>(e =>
+        {
+            e.Property(x => x.PlatformFeePercent).HasPrecision(5, 2);
+            e.Property(x => x.AllowedGeographies).HasMaxLength(200);
+        });
+
+        builder.Entity<SocialAccount>(e => e.Property(x => x.EngagementRate).HasPrecision(6, 2));
+        builder.Entity<Business>(e => e.Property(x => x.Products).HasMaxLength(500));
+        builder.Entity<ProviderProfile>(e => e.Property(x => x.PayoutAccountLabel).HasMaxLength(120));
 
         builder.Entity<Review>(e =>
         {

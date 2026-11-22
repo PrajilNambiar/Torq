@@ -5,6 +5,7 @@ using Torq.Api.Common;
 using Torq.Api.Data;
 using Torq.Api.Domain.Entities;
 using Torq.Api.Services.Email;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Torq.Api.Services;
@@ -13,7 +14,8 @@ public sealed class EmailOtpService(
     TorqDbContext db,
     IEmailSender emailSender,
     IConfiguration configuration,
-    IHostEnvironment environment) : IEmailOtpService
+    IHostEnvironment environment,
+    UserManager<ApplicationUser> users) : IEmailOtpService
 {
     public async Task SendAsync(string email, CancellationToken ct)
     {
@@ -73,6 +75,12 @@ public sealed class EmailOtpService(
         }
 
         challenge.ConsumedAt = DateTime.UtcNow;
+        var user = await users.FindByEmailAsync(email);
+        if (user is { EmailConfirmed: false })
+        {
+            user.EmailConfirmed = true;
+        }
+
         await db.SaveChangesAsync(ct);
     }
 

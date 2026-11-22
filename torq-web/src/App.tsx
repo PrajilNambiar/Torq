@@ -16,11 +16,12 @@ import { ProviderProfile } from './pages/provider/ProviderProfile'
 import { ProviderServices } from './pages/provider/ProviderServices'
 import { ProviderPortfolio } from './pages/provider/ProviderPortfolio'
 import { ProviderSocial } from './pages/provider/ProviderSocial'
+import { ProviderEarnings } from './pages/provider/ProviderEarnings'
 import { Opportunities } from './pages/provider/Opportunities'
 import { ProposalBuilder } from './pages/provider/ProposalBuilder'
 import { CampaignsList } from './pages/campaign/CampaignsList'
 import { CampaignWorkspace } from './pages/campaign/CampaignWorkspace'
-import { AdminCampaigns, AdminDisputes, AdminOverview, AdminProviders, AdminRequirements } from './pages/admin/AdminPages'
+import { AdminCampaigns, AdminDisputes, AdminOverview, AdminProviders, AdminRequirements, AdminTrust } from './pages/admin/AdminPages'
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/provider/services" element={<ProviderServices />} />
           <Route path="/provider/portfolio" element={<ProviderPortfolio />} />
           <Route path="/provider/social" element={<ProviderSocial />} />
+          <Route path="/provider/earnings" element={<ProviderEarnings />} />
           <Route path="/provider/opportunities" element={<Opportunities />} />
           <Route path="/provider/opportunities/:id" element={<ProposalBuilder />} />
         </Route>
@@ -67,6 +69,7 @@ export default function App() {
           <Route path="/admin/providers" element={<AdminProviders />} />
           <Route path="/admin/disputes" element={<AdminDisputes />} />
           <Route path="/admin/campaigns" element={<AdminCampaigns />} />
+          <Route path="/admin/trust" element={<AdminTrust />} />
         </Route>
       </Route>
 

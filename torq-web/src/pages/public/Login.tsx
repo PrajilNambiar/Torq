@@ -2,7 +2,10 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { homeFor } from '../../auth/homeFor'
+import { errorMessage } from '../../api/client'
+import { authApi } from '../../api'
 import { AuthShell } from '../../components/AuthShell'
+import { EmailCodeForm } from '../../components/EmailCodeForm'
 import { ErrorBox, TextBox } from '../../components/ui'
 import { IconLock, IconMail } from '../../components/ui/icons'
 
@@ -14,6 +17,9 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
+  const [needsVerification, setNeedsVerification] = useState(false)
+  const [needsAdminCode, setNeedsAdminCode] = useState(false)
+  const [adminCode, setAdminCode] = useState('')
 
   if (user) return <Navigate to={homeFor(user.role)} replace />
 
@@ -22,11 +28,16 @@ export function Login() {
     setBusy(true)
     setError(null)
     try {
-      const me = await login({ email, password })
-      const from = (location.state as { from?: string } | null)?.from
-      navigate(from ?? homeFor(me.role), { replace: true })
+      const me = await login({ email: email.trim(), password, code: needsAdminCode ? adminCode.trim() : undefined })
     } catch (err) {
       setError(err)
+      const message = errorMessage(err).toLowerCase()
+      setNeedsVerification(message.includes('not verified'))
+      const admin = message.includes('verification code')
+      setNeedsAdminCode(admin)
+      if (admin) {
+        await authApi.sendOtp({ email: email.trim() }).catch(() => undefined)
+      }
     } finally {
       setBusy(false)
     }
@@ -48,7 +59,10 @@ export function Login() {
           placeholder="Enter your email address"
           leadingIcon={<IconMail />}
           value={email}
-          onChange={setEmail}
+          onChange={(value) => {
+            setEmail(value)
+            setNeedsVerification(false)
+          }}
         />
         <TextBox
           label="Password"
@@ -60,10 +74,34 @@ export function Login() {
           value={password}
           onChange={setPassword}
         />
+        {needsAdminCode && (
+          <TextBox
+            label="Admin verification code"
+            required
+            inputMode="numeric"
+            minLength={6}
+            maxLength={6}
+            placeholder="6-digit code"
+            hint="A code was sent to your admin email."
+            value={adminCode}
+            onChange={setAdminCode}
+          />
+        )}
         <button className="btn primary block auth-submit" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign In'}
         </button>
       </form>
+      {needsVerification && (
+        <EmailCodeForm
+          email={email.trim()}
+          submitLabel="Verify and sign in"
+          onVerified={async () => {
+            const me = await login({ email: email.trim(), password })
+            const from = (location.state as { from?: string } | null)?.from
+            navigate(from ?? homeFor(me.role), { replace: true })
+          }}
+        />
+      )}
     </AuthShell>
   )
 }

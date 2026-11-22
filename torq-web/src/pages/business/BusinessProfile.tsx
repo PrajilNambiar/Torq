@@ -31,6 +31,7 @@ function BusinessProfileForm({ initial }: { initial: BusinessDto }) {
     headquartersRegion: initial.headquartersRegion ?? '',
     gstin: '',
     billingEmail: '',
+    products: initial.products ?? '',
   })
 
   const save = useMutation({
@@ -45,6 +46,7 @@ function BusinessProfileForm({ initial }: { initial: BusinessDto }) {
         headquartersRegion: blank(form.headquartersRegion),
         gstin: blank(form.gstin),
         billingEmail: blank(form.billingEmail),
+        products: blank(form.products),
       }),
     onSuccess: (updated) => {
       qc.setQueryData(['business'], updated)
@@ -88,7 +90,9 @@ function BusinessProfileForm({ initial }: { initial: BusinessDto }) {
         <Field label="Billing email">
           <input type="email" value={form.billingEmail} onChange={set('billingEmail')} />
         </Field>
-        <Field label="About the business">
+        <Field label="Products or brands" hint="The brands this business markets.">
+          <input value={form.products} onChange={set('products')} placeholder="Cafe brand, product line" />
+        </Field>
           <textarea rows={4} value={form.description} onChange={set('description')} />
         </Field>
         <div className="form-actions">

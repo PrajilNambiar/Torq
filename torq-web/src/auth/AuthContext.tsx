@@ -2,13 +2,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../api'
 import { setUnauthorizedHandler, tokenStore } from '../api/client'
-import type { LoginRequest, MeResponse, RegisterRequest } from '../types/api'
+import type { LoginRequest, MeResponse, RegisterRequest, RegisterResponse } from '../types/api'
 
 interface AuthState {
   user: MeResponse | null
   loading: boolean
   login: (body: LoginRequest) => Promise<MeResponse>
-  register: (body: RegisterRequest) => Promise<MeResponse>
+  register: (body: RegisterRequest) => Promise<RegisterResponse>
   logout: () => void
 }
 
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       logout,
       login: async (body) => completeAuth((await authApi.login(body)).accessToken),
-      register: async (body) => completeAuth((await authApi.register(body)).accessToken),
+      register: async (body) => authApi.register(body),
     }),
     [user, loading, logout, completeAuth],
   )

@@ -12,5 +12,9 @@ public class SocialAccount
     public string? ProfileUrl { get; set; }
     public bool IsOwnershipVerified { get; set; }
     public long? FollowerCount { get; set; }
+    public string? AudienceGeography { get; set; }
+    public decimal? EngagementRate { get; set; }
+    public string? UsageRights { get; set; }
+    public bool DisclosureAcknowledged { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

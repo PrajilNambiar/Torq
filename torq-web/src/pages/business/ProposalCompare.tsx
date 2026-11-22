@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { requirementsApi } from '../../api'
+import { requirementsApi, providersApi } from '../../api'
 import { StatusBadge } from '../../components/StatusBadge'
 import { Alert, EmptyState, ErrorBox, PageHeader, Spinner } from '../../components/ui'
 import { useToast } from '../../components/Toast'
@@ -108,6 +108,7 @@ export function ProposalCompare() {
                 <strong>{p.providerHeadline ?? `Provider ${shortId(p.providerProfileId)}`}</strong>
                 <StatusBadge kind="proposal" status={p.status} />
               </header>
+              <ProviderTrust providerId={p.providerProfileId} />
               <div className="compare-price">
                 {money(p.priceAmount, p.currency)}
                 {p.priceAmount === lowest && rows.length > 1 && <span className="tag">Lowest</span>}
@@ -183,5 +184,20 @@ export function ProposalCompare() {
         </div>
       )}
     </>
+  )
+}
+
+function ProviderTrust({ providerId }: { providerId: string }) {
+  const card = useQuery({ queryKey: ['provider-card', providerId], queryFn: () => providersApi.card(providerId) })
+  if (!card.data) return null
+  const c = card.data
+  return (
+    <p className="muted small">
+      {c.badge ? `${c.badge} · ` : ''}
+      {c.averageRating ? `${c.averageRating.toFixed(1)} rating · ` : 'No rating yet · '}
+      {c.completedJobs} completed · {c.portfolioCount} portfolio
+      {c.identityVerified ? ' · Identity verified' : ''}
+      {c.portfolioTitles.length ? ` · ${c.portfolioTitles.join(', ')}` : ''}
+    </p>
   )
 }

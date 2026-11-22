@@ -213,6 +213,29 @@ public sealed class PendingPaymentTests : IClassFixture<PendingPaymentFactory>
         var cancelled = await _client.GetFromJsonAsync<CampaignDto>($"/api/v1/campaigns/{captured.CampaignId}");
         cancelled!.Status.Should().Be(CampaignStatus.Cancelled);
     }
+
+    [Fact]
+    public async Task Register_rejects_a_short_phone_number()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new RegisterRequest("phone@test.local", "Password123", "Phone", UserRole.Business, "123"));
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("phone");
+    }
+
+    [Fact]
+    public async Task Admin_reads_platform_settings_without_a_verification_code()
+    {
+        var login = await _client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest("admin@torq.local", "Admin12345!"));
+        login.EnsureSuccess();
+        var admin = (await login.Content.ReadFromJsonAsync<AuthResponse>())!;
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/admin/settings");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", admin.AccessToken);
+        var settings = await _client.SendAsync(request);
+        settings.EnsureSuccess();
+        (await settings.Content.ReadAsStringAsync()).Should().Contain("10");
+    }
 }
 
 internal sealed record PendingCampaign(Guid CampaignId, string BusinessToken, string ProviderToken);
@@ -279,7 +302,8 @@ internal static class MarketplaceSetup
     {
         var response = await client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest(email, "Password123", email.Split('@')[0], role));
         response.EnsureSuccess();
-        return (await response.Content.ReadFromJsonAsync<AuthResponse>())!;
+        (await client.PostAsJsonAsync("/api/v1/auth/otp/verify", new VerifyOtpRequest(email, "123456"))).EnsureSuccess();
+        return await Login(client, email, "Password123");
     }
 
     private static async Task<AuthResponse> Login(HttpClient client, string email, string password)

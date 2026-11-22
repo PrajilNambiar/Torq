@@ -14,7 +14,7 @@ public sealed class AuthController(IAuthService auth, IEmailOtpService otp) : Co
     [HttpPost("register")]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
-    public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request, CancellationToken ct)
+    public async Task<ActionResult<RegisterResponse>> Register([FromBody] RegisterRequest request, CancellationToken ct)
         => Ok(await auth.RegisterAsync(request, ct));
 
     [HttpPost("login")]
@@ -45,4 +45,17 @@ public sealed class AuthController(IAuthService auth, IEmailOtpService otp) : Co
     [Authorize]
     public async Task<ActionResult<MeResponse>> Me([FromServices] ICurrentUser current, CancellationToken ct)
         => Ok(await auth.MeAsync(current.RequireUserId(), ct));
+
+    [HttpGet("me/privacy")]
+    [Authorize]
+    public async Task<ActionResult<PrivacyExportDto>> Privacy([FromServices] ICurrentUser current, CancellationToken ct)
+        => Ok(await auth.ExportAsync(current.RequireUserId(), ct));
+
+    [HttpPost("me/delete")]
+    [Authorize]
+    public async Task<IActionResult> Delete([FromServices] ICurrentUser current, CancellationToken ct)
+    {
+        await auth.DeleteAccountAsync(current.RequireUserId(), ct);
+        return NoContent();
+    }
 }

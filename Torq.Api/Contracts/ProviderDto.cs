@@ -15,4 +15,5 @@ public sealed record ProviderDto(
     ProviderStatus Status,
     bool IdentityVerified,
     bool PortfolioVerified,
-    bool SocialVerified);
+    bool SocialVerified,
+    Guid UserId = default);

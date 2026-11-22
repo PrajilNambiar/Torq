@@ -11,7 +11,7 @@ namespace Torq.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/v1/campaigns")]
-public sealed class CampaignsController(IMarketplaceService marketplace, ICurrentUser current) : ControllerBase
+public sealed class CampaignsController(IMarketplaceService marketplace, ICoverageService coverage, ICurrentUser current) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<PagedResult<CampaignDto>>> List([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
@@ -20,6 +20,10 @@ public sealed class CampaignsController(IMarketplaceService marketplace, ICurren
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<CampaignDto>> Get(Guid id, CancellationToken ct)
         => Ok(await marketplace.GetCampaignAsync(current.RequireUserId(), current.Role ?? UserRole.Business, id, ct));
+
+    [HttpGet("{id:guid}/ledger")]
+    public async Task<ActionResult<IReadOnlyList<LedgerEntryDto>>> Ledger(Guid id, CancellationToken ct)
+        => Ok(await coverage.LedgerAsync(current.RequireUserId(), current.Role ?? UserRole.Business, id, ct));
 
     [HttpGet("{id:guid}/milestones")]
     public async Task<ActionResult<IReadOnlyList<MilestoneDto>>> Milestones(Guid id, CancellationToken ct)

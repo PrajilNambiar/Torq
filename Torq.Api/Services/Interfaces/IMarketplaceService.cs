@@ -22,7 +22,7 @@ public interface IMarketplaceService
     Task SubmitRequirementAsync(Guid userId, Guid id, CancellationToken ct);
     Task<PagedResult<RequirementDto>> ListMyRequirementsAsync(Guid userId, int page, int pageSize, CancellationToken ct);
     Task<RequirementDto> GetRequirementAsync(Guid userId, UserRole role, Guid id, CancellationToken ct);
-    Task<PagedResult<OpportunityDto>> ListOpportunitiesAsync(Guid userId, int page, int pageSize, CancellationToken ct);
+    Task<PagedResult<OpportunityDto>> ListOpportunitiesAsync(Guid userId, int page, int pageSize, OpportunityFilter? filter, CancellationToken ct);
     Task<ProposalDto> UpsertProposalAsync(Guid userId, UpsertProposalRequest request, CancellationToken ct);
     Task WithdrawProposalAsync(Guid userId, Guid proposalId, CancellationToken ct);
     Task<IReadOnlyList<ProposalDto>> ListProposalsForRequirementAsync(Guid userId, Guid requirementId, CancellationToken ct);

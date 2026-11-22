@@ -134,6 +134,8 @@ export function AdminProviders() {
     queryFn: () => adminApi.pendingProviders(page),
   })
   const verify = useAdminAction((id: string) => adminApi.verifyProvider(id), 'Provider verified.', [['admin']])
+  const suspend = useAdminAction((id: string) => adminApi.suspendUser(id), 'User suspended.', [['admin']])
+  const flag = useAdminAction((id: string) => adminApi.flagUser(id, true), 'User flagged for review.', [['admin']])
 
   return (
     <>
@@ -174,6 +176,12 @@ export function AdminProviders() {
                       <td>
                         <button className="btn primary small" disabled={verify.isPending} onClick={() => verify.mutate(p.id)}>
                           Verify
+                        </button>
+                        <button className="btn ghost small" disabled={suspend.isPending} onClick={() => suspend.mutate(p.userId)}>
+                          Suspend
+                        </button>
+                        <button className="btn ghost small" disabled={flag.isPending} onClick={() => flag.mutate(p.userId)}>
+                          Flag
                         </button>
                       </td>
                     </tr>
@@ -278,6 +286,75 @@ export function AdminCampaigns() {
             </div>
             <Pager page={data.page} pageSize={data.pageSize} total={data.total} onPage={setPage} />
           </>
+        )}
+      </Card>
+    </>
+  )
+}
+
+export function AdminTrust() {
+  const toast = useToast()
+  const qc = useQueryClient()
+  const audit = useQuery({ queryKey: ['admin', 'audit'], queryFn: () => adminApi.audit(1) })
+  const exceptions = useQuery({ queryKey: ['admin', 'payments'], queryFn: adminApi.paymentExceptions })
+  const settings = useQuery({ queryKey: ['admin', 'settings'], queryFn: adminApi.settings })
+  const [fee, setFee] = useState('')
+  const [geo, setGeo] = useState('')
+  const save = useMutation({
+    mutationFn: () => adminApi.updateSettings(Number(fee || settings.data?.platformFeePercent || 10), geo || settings.data?.allowedGeographies || 'IN'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'settings'] })
+      toast.success('Marketplace settings saved.')
+    },
+    onError: toast.error,
+  })
+
+  return (
+    <>
+      <PageHeader title="Trust and payments" subtitle="Audit trail, failed or pending charges, commission, and geography." />
+      <ErrorBox error={audit.error ?? exceptions.error ?? settings.error} />
+      <Card title="Commission and geography">
+        <form
+          className="row"
+          onSubmit={(e) => {
+            e.preventDefault()
+            save.mutate()
+          }}
+        >
+          <input aria-label="Platform fee percent" placeholder="Fee %" value={fee} onChange={(e) => setFee(e.target.value)} />
+          <input aria-label="Allowed geographies" placeholder="IN, AE" value={geo} onChange={(e) => setGeo(e.target.value)} />
+          <button className="btn primary" disabled={save.isPending}>Save</button>
+        </form>
+        {settings.data && (
+          <p className="muted small">Current fee {settings.data.platformFeePercent}% · {settings.data.allowedGeographies}</p>
+        )}
+      </Card>
+      <Card title="Payment exceptions">
+        {(exceptions.data ?? []).length === 0 ? (
+          <p className="muted">No failed or processing payments.</p>
+        ) : (
+          <ul className="list">
+            {exceptions.data!.map((p) => (
+              <li key={p.id}>
+                <span>{shortId(p.campaignId)} · {p.status}</span>
+                <span>{money(p.amount, p.currency)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+      <Card title="Audit trail">
+        {(audit.data?.items ?? []).length === 0 ? (
+          <p className="muted">No audit events.</p>
+        ) : (
+          <ul className="list">
+            {audit.data!.items.map((event) => (
+              <li key={event.id}>
+                <span>{event.entityType} · {event.action}</span>
+                <span className="muted">{dateTime(event.createdAt)}</span>
+              </li>
+            ))}
+          </ul>
         )}
       </Card>
     </>

@@ -17,6 +17,7 @@ public class Business
     public string CountryCode { get; set; } = "IN";
     public string? Gstin { get; set; }
     public string? BillingEmail { get; set; }
+    public string? Products { get; set; }
     public BusinessStatus Status { get; set; } = BusinessStatus.Active;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

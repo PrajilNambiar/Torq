@@ -31,11 +31,13 @@ export interface RegisterRequest {
   password: string
   displayName: string
   role: UserRole
+  phone?: string | null
 }
 
 export interface LoginRequest {
   email: string
   password: string
+  code?: string | null
 }
 
 export interface AuthResponse {
@@ -43,6 +45,20 @@ export interface AuthResponse {
   userId: string
   role: UserRole
   displayName: string
+}
+
+export interface RegisterResponse {
+  email: string
+  emailVerificationRequired: boolean
+}
+
+export interface SendOtpRequest {
+  email: string
+}
+
+export interface VerifyOtpRequest {
+  email: string
+  code: string
 }
 
 export interface MeResponse {
@@ -66,6 +82,7 @@ export interface BusinessDto {
   headquartersRegion: string | null
   countryCode: string
   status: BusinessStatus
+  products: string | null
 }
 
 export interface UpdateBusinessRequest {
@@ -78,6 +95,7 @@ export interface UpdateBusinessRequest {
   headquartersRegion?: string | null
   gstin?: string | null
   billingEmail?: string | null
+  products?: string | null
 }
 
 export interface ProviderDto {
@@ -94,6 +112,7 @@ export interface ProviderDto {
   identityVerified: boolean
   portfolioVerified: boolean
   socialVerified: boolean
+  userId: string
 }
 
 export interface UpdateProviderRequest {
@@ -154,6 +173,10 @@ export interface SocialAccountDto {
   profileUrl: string | null
   isOwnershipVerified: boolean
   followerCount: number | null
+  audienceGeography: string | null
+  engagementRate: number | null
+  usageRights: string | null
+  disclosureAcknowledged: boolean
 }
 
 export interface CreateSocialRequest {
@@ -161,6 +184,10 @@ export interface CreateSocialRequest {
   handle: string
   profileUrl?: string | null
   followerCount?: number | null
+  audienceGeography?: string | null
+  engagementRate?: number | null
+  usageRights?: string | null
+  disclosureAcknowledged?: boolean
 }
 
 export interface FileAssetDto {
@@ -215,6 +242,75 @@ export interface RequirementDto {
   status: RequirementStatus
   createdAt: string
   assets: FileAssetDto[]
+  viewCount: number
+}
+
+export interface ProviderCardDto {
+  providerProfileId: string
+  headline: string | null
+  status: ProviderStatus
+  identityVerified: boolean
+  portfolioVerified: boolean
+  socialVerified: boolean
+  averageRating: number
+  reviewCount: number
+  completedJobs: number
+  portfolioCount: number
+  badge: string | null
+  responseHours: number | null
+  portfolioTitles: string[]
+}
+
+export interface EarningDto {
+  id: string
+  campaignId: string
+  grossAmount: number
+  feeAmount: number
+  netAmount: number
+  currency: string
+  status: string
+  createdAt: string
+}
+
+export interface LedgerEntryDto {
+  kind: string
+  id: string
+  amount: number
+  currency: string
+  status: string
+  externalId: string | null
+  createdAt: string
+}
+
+export interface RequirementQuestionDto {
+  id: string
+  body: string
+  answer: string | null
+  createdAt: string
+  answeredAt: string | null
+}
+
+export interface AuditEventDto {
+  id: string
+  actorUserId: string | null
+  entityType: string
+  entityId: string
+  action: string
+  createdAt: string
+}
+
+export interface PlatformSettingsDto {
+  platformFeePercent: number
+  allowedGeographies: string
+}
+
+export interface PaymentExceptionDto {
+  id: string
+  campaignId: string
+  amount: number
+  currency: string
+  status: string
+  createdAt: string
 }
 
 export interface OpportunityDto {
@@ -253,6 +349,7 @@ export interface UpsertProposalRequest {
   submit: boolean
   milestones?: ProposalMilestoneDto[] | null
   portfolioItemIds?: string[] | null
+  validUntil?: string | null
 }
 
 export interface ProposalDto {

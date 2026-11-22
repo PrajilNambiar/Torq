@@ -66,8 +66,8 @@ export function errorMessage(error: unknown): string {
   if (error instanceof AxiosError) {
     const status = error.response?.status
     const body = error.response?.data as ProblemBody | undefined
-    if (status === 429) return 'Too many requests. Please wait a minute and try again.'
     if (body?.error) return body.error
+    if (status === 429) return 'Too many requests. Please wait a minute and try again.'
     if (body?.errors) return Object.values(body.errors).flat().join(' ')
     if (body?.title) return body.title
     if (!error.response) return `Cannot reach the Torq API at ${api.defaults.baseURL}.`

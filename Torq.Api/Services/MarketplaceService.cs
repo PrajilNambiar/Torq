@@ -9,7 +9,6 @@ using Torq.Api.Domain.Entities;
 using Torq.Api.Domain.Enums;
 using Torq.Api.Services.Payments;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace Torq.Api.Services;
 
@@ -23,9 +22,9 @@ public sealed class MarketplaceService(
     IUnitOfWork unitOfWork,
     IAuditRepository audit,
     IMapper mapper,
-    IOptions<MarketplaceOptions> options,
     IFileStorage files,
-    IPaymentProvider payments) : IMarketplaceService
+    IPaymentProvider payments,
+    ICoverageService coverage) : IMarketplaceService
 {
     public async Task<BusinessDto> GetBusinessAsync(Guid userId, CancellationToken ct)
     {
@@ -121,7 +120,11 @@ public sealed class MarketplaceService(
             Platform = request.Platform,
             Handle = request.Handle,
             ProfileUrl = request.ProfileUrl,
-            FollowerCount = request.FollowerCount
+            FollowerCount = request.FollowerCount,
+            AudienceGeography = request.AudienceGeography,
+            EngagementRate = request.EngagementRate,
+            UsageRights = request.UsageRights,
+            DisclosureAcknowledged = request.DisclosureAcknowledged
         };
         providers.AddSocial(account);
         await unitOfWork.SaveChangesAsync(ct);
@@ -232,13 +235,13 @@ public sealed class MarketplaceService(
         return mapper.Map<RequirementDto>(requirement);
     }
 
-    public async Task<PagedResult<OpportunityDto>> ListOpportunitiesAsync(Guid userId, int page, int pageSize, CancellationToken ct)
+    public async Task<PagedResult<OpportunityDto>> ListOpportunitiesAsync(Guid userId, int page, int pageSize, OpportunityFilter? filter, CancellationToken ct)
     {
         var provider = await providers.RequireByUserIdAsync(userId, tracking: false, ct);
         EnsureVerified(provider);
 
         var categories = RequirementMatcher.ParseServiceCategories(provider.ServiceCategories);
-        var result = await requirements.ListEligibleAsync(categories, page, pageSize, ct);
+        var result = await requirements.ListEligibleAsync(categories, page, pageSize, filter, ct);
         return MapPage<Requirement, OpportunityDto>(result);
     }
 
@@ -277,6 +280,7 @@ public sealed class MarketplaceService(
         proposal.ClientRequirements = request.ClientRequirements;
         proposal.OptionalAddOns = request.OptionalAddOns;
         proposal.CoverNote = request.CoverNote;
+        proposal.ValidUntil = request.ValidUntil;
         proposal.UpdatedAt = DateTime.UtcNow;
         proposal.Milestones.Clear();
         foreach (var milestone in request.Milestones ?? [])
@@ -379,12 +383,18 @@ public sealed class MarketplaceService(
             throw new AppException("A provider has already been selected.");
         }
 
+        if (proposal.ValidUntil is not null && proposal.ValidUntil < DateTime.UtcNow)
+        {
+            throw new AppException("This proposal has expired.");
+        }
+
         if (proposal.Status is not (ProposalStatus.Submitted or ProposalStatus.Shortlisted))
         {
             throw new AppException("Proposal cannot be selected.");
         }
 
-        var feePercent = options.Value.PlatformFeePercent;
+        var settings = await coverage.GetSettingsAsync(ct);
+        var feePercent = settings.PlatformFeePercent;
         var campaign = new Campaign
         {
             Id = Guid.NewGuid(),
